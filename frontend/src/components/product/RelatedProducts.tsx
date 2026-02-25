@@ -45,7 +45,7 @@ export const RelatedProducts = ({ products }: RelatedProductsProps) => {
         {products.map((product, i) => (
           <div
             key={product.id}
-            className="min-w-[48%] sm:min-w-[45%] md:min-w-[24%] lg:min-w-[23%] snap-start"
+            className="flex-shrink-0 w-[calc(50%-0.5rem)] sm:w-[calc(50%-0.5rem)] md:w-[calc(25%-0.75rem)] lg:w-[calc(25%-0.75rem)] snap-start aspect-[0.5]"
           >
             <ProductCard product={product} index={i} />
           </div>

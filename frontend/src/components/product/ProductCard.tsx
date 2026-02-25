@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingCart, Star } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
@@ -21,15 +21,15 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.03, y: -8 }}
+      whileHover={{ scale: 1, y: -4 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ delay: index * 0.05, duration: 0.15 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group bg-card rounded-2xl border-2 border-border/50 hover:border-primary hover:border-[3px] overflow-hidden shadow-md hover:shadow-[0_20px_50px_rgba(255,140,0,0.4)] transition-all duration-100"
+      className="group bg-card rounded-2xl border-2 border-border/50 hover:border-primary hover:border-[3px] overflow-hidden shadow-md hover:shadow-[0_20px_50px_rgba(255,140,0,0.4)] transition-all duration-100 h-full flex flex-col"
     >
       {/* Image */}
-      <Link to={`/product/${product.id}`} className="relative aspect-square overflow-hidden bg-muted/30 block">
+      <Link to={`/product/${product.id}`} className="relative aspect-square overflow-hidden bg-muted/30 block flex-shrink-0">
         <motion.img
           src={isHovered ? product.hoverImage : product.image}
           alt={product.title}
@@ -87,10 +87,10 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
       </Link>
 
       {/* Info */}
-      <div className="p-4 bg-gradient-to-b from-background to-muted/20">
+      <div className="p-4 bg-gradient-to-b from-background to-muted/20 flex flex-col h-32">
         <Link to={`/product/${product.id}`}>
           <motion.h3 
-            className="font-medium text-sm text-foreground line-clamp-2 mb-2 group-hover:text-primary transition-colors duration-100"
+            className="font-medium text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-100 h-10"
             animate={{ x: isHovered ? 2 : 0 }}
             transition={{ duration: 0.1 }}
           >
@@ -98,22 +98,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           </motion.h3>
         </Link>
         <motion.div 
-          className="flex items-center gap-1 mb-2"
-          animate={{ scale: isHovered ? 1.05 : 1 }}
-          transition={{ duration: 0.1 }}
-        >
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={`w-3.5 h-3.5 transition-all duration-100 ${
-                i < Math.floor(product.rating) ? "fill-primary text-primary" : "text-border"
-              }`}
-            />
-          ))}
-          <span className="text-xs text-muted-foreground ml-1">({product.reviewCount})</span>
-        </motion.div>
-        <motion.div 
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 mt-auto"
           animate={{ 
             scale: isHovered ? 1.05 : 1,
             x: isHovered ? 2 : 0 
