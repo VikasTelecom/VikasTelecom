@@ -1,7 +1,7 @@
 {
   "name": "vikash-telecome-backend",
   "version": "1.0.0",
-  "description": "Backend API for VikashTelecome frontend",
+  "description": "Backend API for VikasTelecom frontend",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {

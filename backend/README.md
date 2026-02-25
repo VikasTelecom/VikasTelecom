@@ -1,6 +1,6 @@
 # Backend API
 
-Express + MongoDB backend for the VikashTelecome frontend.
+Express + MongoDB backend for the VikasTelecom frontend.
 
 ## Setup
 1. Create an `.env` file based on `.env.example`.

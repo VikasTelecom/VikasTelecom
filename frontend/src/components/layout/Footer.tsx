@@ -33,11 +33,11 @@ export const Footer = () => {
             <a href="/" className="flex items-center gap-2 mb-4">
               <img
                 src="/vikashlovesmeppu.jpeg"
-                alt="VikashTelecome"
+                alt="VikasTelecom"
                 className="h-10 w-10 object-contain"
               />
               <span className="font-bold text-xl">
-                Vikash<span className="text-primary">Telecome</span>
+                Vikas<span className="text-primary">Telecom</span>
               </span>
             </a>
             <p className="text-background/60 text-sm leading-relaxed mb-6 max-w-sm">
@@ -71,7 +71,7 @@ export const Footer = () => {
       {/* Bottom */}
       <div className="border-t border-background/10">
         <div className="container-main py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-background/40">© 2026 VikashTelecome. All rights reserved.</p>
+          <p className="text-sm text-background/40">© 2026 VikasTelecom. All rights reserved.</p>
           <div className="flex items-center gap-3">
             {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
               <a

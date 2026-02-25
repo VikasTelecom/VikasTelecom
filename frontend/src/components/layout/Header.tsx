@@ -177,11 +177,11 @@ export const Header = () => {
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <img
                 src="/android-chrome-192x192.png"
-                alt="VikashTelecome"
-                className="h-14 w-14 object-contain"
+                alt="VikasTelecom"
+                className="h-10 w-10 object-contain"
               />
               <span className="font-bold text-xl tracking-tight text-foreground">
-                Vikash<span className="text-primary">Telecome</span>
+                Vikas<span className="text-primary">Telecom</span>
               </span>
             </Link>
 
