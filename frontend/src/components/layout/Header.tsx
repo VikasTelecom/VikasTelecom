@@ -176,7 +176,7 @@ export const Header = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <img
-                src="/favicon-32x32.png"
+                src="/android-chrome-192x192.png"
                 alt="VikashTelecome"
                 className="h-10 w-10 object-contain"
               />
