@@ -11,6 +11,7 @@ const userRoutes = require("./routes/userRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const couponRoutes = require("./routes/couponRoutes");
 const { notFound, errorHandler } = require("./middleware/error");
 
 const app = express();
@@ -32,6 +33,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/coupons", couponRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

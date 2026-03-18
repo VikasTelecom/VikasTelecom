@@ -57,8 +57,13 @@ const Signup = () => {
     try {
       await signup(form.name, form.email, form.phone, form.password);
       navigate("/");
-    } catch {
-      setErrors({ email: "Signup failed. Please try again." });
+    } catch (err: any) {
+      // Show backend error message if available
+      let msg = "Signup failed. Please try again.";
+      if (err instanceof Error && err.message) {
+        msg = err.message;
+      }
+      setErrors({ email: msg });
     } finally {
       setLoading(false);
     }

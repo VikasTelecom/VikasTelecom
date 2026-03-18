@@ -55,6 +55,7 @@ const variantSchema = new mongoose.Schema(
 const productSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
+    generalName: { type: String, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true },
     image: { type: String, required: true },
     hoverImage: { type: String },

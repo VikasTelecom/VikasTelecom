@@ -1,7 +1,18 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, User, ShoppingCart, Menu, X, ChevronDown, Home } from "lucide-react";
+import { Search, User, ShoppingCart, Menu, X, ChevronDown, Home, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { MegaMenu } from "./MegaMenu";
 import { BrandsMegaMenu } from "./BrandsMegaMenu";
 import { MobileMenu } from "./MobileMenu";
@@ -31,6 +42,7 @@ export const Header = () => {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const brandsHoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -272,9 +284,50 @@ export const Header = () => {
                 {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
               </button>
 
-              <Link to="/login" className="p-2 rounded-full hover:bg-muted transition-colors hidden sm:flex" aria-label="Account">
-                <User className="w-5 h-5" />
-              </Link>
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="p-1.5 rounded-full hover:bg-muted transition-colors hidden sm:flex items-center justify-center"
+                      aria-label="Account menu"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>
+                          {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col">
+                        <span className="font-medium truncate">{user?.name || "User"}</span>
+                        <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {/* Future: add /profile page */}
+                    {/* <DropdownMenuItem asChild>
+                      <Link to="/profile">Profile</Link>
+                    </DropdownMenuItem> */}
+                    <DropdownMenuItem
+                      onClick={() => logout()}
+                      className="text-destructive cursor-pointer flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  to="/login"
+                  className="p-2 rounded-full hover:bg-muted transition-colors hidden sm:flex"
+                  aria-label="Account"
+                >
+                  <User className="w-5 h-5" />
+                </Link>
+              )}
 
               <button
                 onClick={() => setIsCartOpen(true)}

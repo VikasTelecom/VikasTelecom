@@ -95,7 +95,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeFromCart = useCallback((lineId: string) => {
     if (isAuthenticated) {
-      const item = items.find((entry) => entry.id === lineId);
+      // If authenticating, we expect lineId to be the _id from the database
+      // But just in case, let's find the item by id OR lineId
+      const item = items.find((entry) => entry.id === lineId || entry.lineId === lineId);
       if (!item?.id) return;
       api.removeCartItem(item.id)
         .then(mapServerCart)
@@ -107,7 +109,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateQuantity = useCallback((lineId: string, quantity: number) => {
     if (isAuthenticated) {
-      const item = items.find((entry) => entry.id === lineId);
+      if (quantity <= 0) {
+          removeFromCart(lineId);
+          return;
+      }
+      const item = items.find((entry) => entry.id === lineId || entry.lineId === lineId);
       if (!item?.id) return;
       api.updateCartItem(item.id, quantity)
         .then(mapServerCart)

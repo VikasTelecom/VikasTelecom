@@ -121,7 +121,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "https://vikastelecom.onren
 
 const getToken = () => localStorage.getItem("auth_token");
 
-const apiRequest = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
+export const apiRequest = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
   const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
   const headers = new Headers(options.headers || {});
   const token = getToken();
@@ -230,6 +230,29 @@ export const api = {
   fetchProducts: async (params?: Record<string, string | number | boolean | undefined>) => {
     const data = await apiRequest<Paginated<ApiProduct>>(`/products${buildQuery(params)}`);
     return { ...data, items: data.items.map(normalizeProduct) };
+  },
+
+  // Coupons
+  adminCreateCoupon: async (data: any) => {
+    return apiRequest<any>("/coupons", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+  adminListCoupons: async () => {
+    return apiRequest<any[]>("/coupons");
+  },
+  adminDeleteCoupon: async (id: string) => {
+    return apiRequest<any>(`/coupons/${id}`, {
+      method: "DELETE",
+    });
+  },
+  validateCoupon: async (code: string, cartTotal: number) => {
+    return apiRequest<any>("/coupons/validate", {
+      method: "POST",
+      body: JSON.stringify({ code, cartTotal }),
+      skipAuth: true,
+    });
   },
   fetchProduct: async (idOrSlug: string) => {
     const data = await apiRequest<{ product: ApiProduct }>(`/products/${idOrSlug}`);

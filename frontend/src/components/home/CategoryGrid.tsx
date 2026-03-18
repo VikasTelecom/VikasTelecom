@@ -30,16 +30,16 @@ export const CategoryGrid = () => {
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Shop by Category</h2>
           <p className="text-muted-foreground">Find the perfect gadget for your needs</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="flex overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-4 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
           {items.map((cat, i) => (
             <motion.a
               key={cat.id}
-              href="#"
+              href={`/category/${cat.slug}`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.05 }}
-              className="group relative aspect-square rounded-2xl overflow-hidden bg-muted"
+              className="flex-shrink-0 w-[40%] md:w-auto snap-start group relative aspect-square rounded-2xl overflow-hidden bg-muted"
             >
               <img
                 src={cat.image}

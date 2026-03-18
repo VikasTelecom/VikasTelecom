@@ -18,6 +18,7 @@ export interface ProductVariant {
 export interface Product {
   id: string;
   title: string;
+  generalName?: string;
   slug: string;
   image: string;
   hoverImage: string;

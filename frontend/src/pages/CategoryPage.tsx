@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { SlidersHorizontal, ChevronRight, PackageSearch } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -8,6 +8,7 @@ import { CartDrawer } from "@/components/layout/CartDrawer";
 import { ProductCard } from "@/components/product/ProductCard";
 import { FilterSidebar, Filters } from "@/components/category/FilterSidebar";
 import { Product } from "@/data/products";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Select,
   SelectContent,
@@ -37,6 +38,8 @@ interface CategoryPageProps {
   products: Product[];
 }
 
+import { Label } from "@/components/ui/label";
+
 const CategoryPage = ({ title, description, products }: CategoryPageProps) => {
   const maxPrice = useMemo(() => getMaxPrice(products), [products]);
   const brands = useMemo(() => {
@@ -54,6 +57,9 @@ const CategoryPage = ({ title, description, products }: CategoryPageProps) => {
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -192,11 +198,32 @@ const CategoryPage = ({ title, description, products }: CategoryPageProps) => {
             </div>
 
             {paginatedProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
-                {paginatedProducts.map((product, i) => (
-                  <ProductCard key={product.id} product={product} index={i} />
-                ))}
-              </div>
+              isMobile ? (
+                <div className="w-full space-y-4">
+                  <Label className="text-lg font-semibold">Select Product</Label>
+                  <Select onValueChange={(slug) => navigate(`/product/${slug}`)}>
+                    <SelectTrigger className="w-full h-12 text-base">
+                      <SelectValue placeholder="Select a product from the list..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredProducts.map((product) => (
+                        <SelectItem key={product.id} value={product.slug} className="py-3 text-base">
+                          {product.generalName || product.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground text-center">
+                    Showing {filteredProducts.length} products
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
+                  {paginatedProducts.map((product, i) => (
+                    <ProductCard key={product.id} product={product} index={i} />
+                  ))}
+                </div>
+              )
             ) : (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -215,7 +242,7 @@ const CategoryPage = ({ title, description, products }: CategoryPageProps) => {
               </motion.div>
             )}
 
-            {totalPages > 1 && (
+            {totalPages > 1 && !isMobile && (
               <div className="flex items-center justify-center gap-2 mt-10">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}

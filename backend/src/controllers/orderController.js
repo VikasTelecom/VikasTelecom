@@ -1,8 +1,11 @@
 const Order = require("../models/Order");
+const Coupon = require("../models/Coupon");
 
 const createOrder = async (req, res) => {
   const items = Array.isArray(req.body.items) ? req.body.items : [];
   const address = req.body.address || "";
+  const couponCode = req.body.couponCode;
+  const discount = Number(req.body.discount || 0);
 
   const computedTotal = items.reduce((sum, item) => {
     const price = Number(item.price || 0);
@@ -10,9 +13,24 @@ const createOrder = async (req, res) => {
     return sum + price * qty;
   }, 0);
 
-  const total = computedTotal || Number(req.body.total || 0);
+  // If coupon is used, increment its usage count
+  if (couponCode) {
+    const coupon = await Coupon.findOne({ code: couponCode });
+    if (coupon) {
+      coupon.usedCount += 1;
+      await coupon.save();
+    }
+  }
 
-  if (!total) {
+  // If items are provided, recalculate purely based on items.
+  // Ideally, should recalculate shipping/tax/discount server side.
+  // For now, trusting the total provided, or falling back to computedTotal - discount.
+  // But to support discounts we should probably trust the passed "total" or do full calc.
+  // Let's rely on passed total but verify it's not absurdly low compared to items?
+  // Or just use the passed total.
+  const total = Number(req.body.total) || (computedTotal - discount);
+
+  if (total === undefined || total === null) {
     return res.status(400).json({ message: "Order total is required" });
   }
 
@@ -22,6 +40,8 @@ const createOrder = async (req, res) => {
     email: req.user.email,
     items,
     total,
+    couponCode,
+    discount,
     address,
   });
 

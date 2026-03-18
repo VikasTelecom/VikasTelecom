@@ -45,12 +45,14 @@ type VariantForm = {
 };
 
 type AdminProductView = AdminProduct & {
+  generalName?: string;
   images?: string[];
   variants?: VariantForm[];
 };
 
 interface ProductForm {
   name: string;
+  generalName: string;
   category: string;
   brand: string;
   description: string;
@@ -69,6 +71,7 @@ interface ProductForm {
 
 const defaultForm: ProductForm = {
   name: "",
+  generalName: "",
   category: "",
   brand: "no-brand",
   description: "",
@@ -192,6 +195,7 @@ export default function Products() {
         const mapped = productData.items.map((product) => ({
           id: product.id,
           name: product.title,
+          generalName: product.generalName || "",
           image: product.image,
           hoverImage: product.hoverImage,
           images: product.images || [],
@@ -275,6 +279,7 @@ export default function Products() {
     setEditingProduct(p);
     setForm({
       name: p.name,
+      generalName: p.generalName || "",
       category: p.category,
       brand: (p as any).brand || "no-brand",
       description: p.description,
@@ -351,6 +356,7 @@ export default function Products() {
     
     const payload = {
       title: form.name.trim(),
+      generalName: form.generalName.trim(),
       category: form.category,
       brand: form.brand && form.brand !== "no-brand" ? form.brand : undefined,
       description: form.description,
@@ -373,6 +379,7 @@ export default function Products() {
         setProducts((prev) => prev.map((p) => p.id === editingProduct.id ? {
           ...p,
           name: updated.title,
+          generalName: updated.generalName || "",
           image: updated.image,
           hoverImage: updated.hoverImage,
           images: updated.images || [],
@@ -408,6 +415,7 @@ export default function Products() {
         const newProduct: AdminProductView = {
           id: created.id,
           name: created.title,
+          generalName: created.generalName || "",
           image: created.image,
           hoverImage: created.hoverImage,
           images: created.images || [],
@@ -672,6 +680,17 @@ export default function Products() {
                     className="text-sm"
                   />
                   <p className="text-xs text-muted-foreground">{form.name.length}/200 characters — Use a clear, descriptive title</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="font-semibold">General Name</Label>
+                  <Input
+                    placeholder="e.g. boAt Airdopes"
+                    value={form.generalName}
+                    onChange={(e) => setForm({ ...form, generalName: e.target.value })}
+                    className="text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">Used for simplified mobile view (e.g. grouped product name)</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

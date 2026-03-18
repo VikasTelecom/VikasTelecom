@@ -30,6 +30,8 @@ const orderSchema = new mongoose.Schema(
     email: { type: String },
     items: [orderItemSchema],
     total: { type: Number, required: true },
+    couponCode: { type: String },
+    discount: { type: Number, default: 0 },
     status: {
       type: String,
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],

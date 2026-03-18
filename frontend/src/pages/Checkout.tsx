@@ -41,6 +41,7 @@ const Checkout = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saveAddress, setSaveAddress] = useState(true);
   const [setAsDefault, setSetAsDefault] = useState(true);
@@ -72,11 +73,7 @@ const Checkout = () => {
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const shipping = useMemo(() => (subtotal >= 999 ? 0 : 49), [subtotal]);
   const gst = useMemo(() => Math.round(subtotal * 0.12), [subtotal]);
-  const couponDiscount = useMemo(() => {
-    if (!couponApplied) return 0;
-    const discount = Math.round(subtotal * 0.1);
-    return Math.min(discount, 500);
-  }, [couponApplied, subtotal]);
+  const couponDiscount = useMemo(() => discountAmount, [discountAmount]);
   const codFee = useMemo(() => (paymentMethod === "cod" ? 49 : 0), [paymentMethod]);
   const finalTotal = useMemo(
     () => Math.max(0, subtotal + shipping + gst + codFee - couponDiscount),
@@ -183,17 +180,20 @@ const Checkout = () => {
     }
   };
 
-  const applyCoupon = () => {
+  const applyCoupon = async () => {
     if (!couponCode.trim()) {
       toast({ title: "Enter a coupon code", variant: "destructive" });
       return;
     }
-    if (couponCode.trim().toUpperCase() === "SAVE10") {
+    try {
+      const res = await api.validateCoupon(couponCode, subtotal);
+      setDiscountAmount(res.discountAmount);
       setCouponApplied(true);
-      toast({ title: "Coupon applied" });
-    } else {
+      toast({ title: "Coupon applied", description: `You saved ₹${res.discountAmount}` });
+    } catch (error: any) {
       setCouponApplied(false);
-      toast({ title: "Invalid coupon", variant: "destructive" });
+      setDiscountAmount(0);
+      toast({ title: "Invalid coupon", description: error.message || "Invalid coupon", variant: "destructive" });
     }
   };
 
@@ -227,6 +227,8 @@ const Checkout = () => {
           image: item.product.image,
           variant: item.variant,
         })),
+        couponCode: couponApplied ? couponCode : undefined,
+        discount: couponDiscount,
         total: finalTotal,
         address: selectedAddressId,
         paymentMethod,
@@ -287,7 +289,7 @@ const Checkout = () => {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_395px] gap-8">
           <section className="space-y-6">
             <div className="border border-border rounded-2xl p-5 sm:p-6 bg-white">
               <div className="flex items-center justify-between gap-4 mb-4">
@@ -537,28 +539,38 @@ const Checkout = () => {
             </div>
           </section>
 
-          <aside className="space-y-4">
+          <aside className="space-y-4 min-w-0">
             <div className="border border-border rounded-2xl p-5 sm:p-6 bg-white lg:sticky lg:top-24">
               <h2 className="text-lg font-semibold">Order Summary</h2>
               <div className="mt-4 space-y-3">
                 {items.map((item) => (
-                  <div key={item.lineId} className="flex items-center gap-3 text-sm">
-                    <img src={item.product.image} alt={item.product.title} className="h-12 w-12 rounded-lg border border-border object-cover" />
-                    <div className="flex-1">
-                      <p className="font-medium truncate">{item.product.title}</p>
+                  <div key={item.lineId} className="flex gap-3 text-sm items-start">
+                    <div className="flex-shrink-0">
+                      <img 
+                        src={item.product.image} 
+                        alt={item.product.title} 
+                        className="h-16 w-16 rounded-lg border border-border object-cover" 
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm break-words whitespace-normal line-clamp-2">
+                        {item.product.title}
+                      </p>
                       {item.variant?.attributes && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
                           {[item.variant.attributes.color, item.variant.attributes.storage, item.variant.attributes.ram]
                             .filter(Boolean)
                             .join(" · ")}
                         </p>
                       )}
                       {item.variant?.name && (
-                        <p className="text-xs text-muted-foreground">Variant: {item.variant.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">Variant: {item.variant.name}</p>
                       )}
-                      <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                      <p className="text-xs text-muted-foreground mt-1 font-medium">Qty: {item.quantity}</p>
                     </div>
-                    <span className="font-medium">₹{((item.variant?.price ?? item.product.price) * item.quantity).toLocaleString()}</span>
+                    <span className="font-semibold text-sm whitespace-nowrap">
+                      ₹{((item.variant?.price ?? item.product.price) * item.quantity).toLocaleString()}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -595,20 +607,23 @@ const Checkout = () => {
               <p className="mt-2 text-xs text-emerald-600">You saved ₹{couponDiscount.toLocaleString()} today</p>
               <div className="mt-4 flex items-center gap-2">
                 <Input
+                  className="bg-white"
                   placeholder="Coupon code"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                 />
-                <Button variant="outline" onClick={applyCoupon}>Apply</Button>
+                <Button variant="outline" onClick={applyCoupon} disabled={couponApplied}>
+                  {couponApplied ? "Applied" : "Apply"}
+                </Button>
               </div>
-              <Button onClick={handlePay} disabled={loading || items.length === 0} className="w-full mt-4">
+              <Button size="lg" onClick={handlePay} disabled={loading || items.length === 0} className="w-full mt-4 bg-primary hover:bg-primary/90">
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Processing...
                   </span>
                 ) : (
-                  `Place Order ₹${finalTotal.toLocaleString()}`
+                  `Place Order — ₹${finalTotal.toLocaleString()}`
                 )}
               </Button>
               <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
