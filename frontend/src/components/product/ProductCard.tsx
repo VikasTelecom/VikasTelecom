@@ -28,9 +28,9 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
 
   const imageSrc = hasImageError
     ? FALLBACK_PRODUCT_IMAGE
-    : isHovered && product.hoverImage
-    ? product.hoverImage
-    : product.image || FALLBACK_PRODUCT_IMAGE;
+    : isHovered && (product.hoverImage || product.images?.[1])
+    ? product.hoverImage || product.images?.[1] || FALLBACK_PRODUCT_IMAGE
+    : product.image || product.images?.[0] || FALLBACK_PRODUCT_IMAGE;
 
   return (
     <motion.div
@@ -45,7 +45,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     >
       {/* Image */}
       <Link to={`/product/${product.id}`} className="relative aspect-square overflow-hidden bg-muted/30 block flex-shrink-0">
-        <motion.img
+        <img
           src={imageSrc}
           alt={product.title}
           className="w-full h-full object-cover"
@@ -53,8 +53,6 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           fetchPriority={index < 4 ? "high" : "auto"}
           decoding="async"
           onError={() => setHasImageError(true)}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
         />
         {product.badge && (
           <motion.span

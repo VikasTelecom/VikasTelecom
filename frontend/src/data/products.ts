@@ -22,6 +22,7 @@ export interface Product {
   slug: string;
   image: string;
   hoverImage: string;
+  images?: string[];
   price: number;
   mrp: number;
   discount: number;
