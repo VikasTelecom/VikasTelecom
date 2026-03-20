@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+
+const FALLBACK_PRODUCT_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" rx="32" fill="#f4f4f5"/><rect x="56" y="56" width="288" height="288" rx="28" fill="#e4e4e7"/><path d="M104 274l66-76 44 48 30-28 56 56H104z" fill="#c4c4c8"/><circle cx="144" cy="154" r="24" fill="#d4d4d8"/></svg>'
+)}`;
 
 interface ProductCardProps {
   product: Product;
@@ -13,9 +17,20 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [hasImageError, setHasImageError] = useState(false);
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const wishlisted = isInWishlist(product.id);
+
+  useEffect(() => {
+    setHasImageError(false);
+  }, [product.id, product.image, product.hoverImage]);
+
+  const imageSrc = hasImageError
+    ? FALLBACK_PRODUCT_IMAGE
+    : isHovered && product.hoverImage
+    ? product.hoverImage
+    : product.image || FALLBACK_PRODUCT_IMAGE;
 
   return (
     <motion.div
@@ -31,10 +46,13 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
       {/* Image */}
       <Link to={`/product/${product.id}`} className="relative aspect-square overflow-hidden bg-muted/30 block flex-shrink-0">
         <motion.img
-          src={isHovered ? product.hoverImage : product.image}
+          src={imageSrc}
           alt={product.title}
           className="w-full h-full object-cover"
-          loading="lazy"
+          loading={index < 4 ? "eager" : "lazy"}
+          fetchPriority={index < 4 ? "high" : "auto"}
+          decoding="async"
+          onError={() => setHasImageError(true)}
           animate={{ scale: 1 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
         />

@@ -4,6 +4,10 @@ import { categories as fallbackCategories } from "@/data/categories";
 import { api } from "@/lib/api";
 import type { Category } from "@/data/categories";
 
+const FALLBACK_CATEGORY_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" rx="32" fill="#f4f4f5"/><rect x="56" y="56" width="288" height="288" rx="28" fill="#e4e4e7"/><path d="M104 274l66-76 44 48 30-28 56 56H104z" fill="#c4c4c8"/><circle cx="144" cy="154" r="24" fill="#d4d4d8"/></svg>'
+)}`;
+
 export const CategoryGrid = () => {
   const [items, setItems] = useState<Category[]>(fallbackCategories);
 
@@ -45,7 +49,12 @@ export const CategoryGrid = () => {
                 src={cat.image}
                 alt={cat.title}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                loading="lazy"
+                loading={i < 4 ? "eager" : "lazy"}
+                fetchPriority={i < 4 ? "high" : "auto"}
+                decoding="async"
+                onError={(event) => {
+                  event.currentTarget.src = FALLBACK_CATEGORY_IMAGE;
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-4">
