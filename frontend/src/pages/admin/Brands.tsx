@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -16,7 +17,9 @@ interface Brand {
   slug: string;
   logo: string;
   category: string;
+  categories: string[];
   categoryName?: string;
+  categoryNames?: string[];
   productCount: number;
   status: "active" | "inactive";
   description: string;
@@ -39,7 +42,7 @@ export default function Brands() {
   const [form, setForm] = useState({ 
     name: "", 
     slug: "", 
-    category: "", 
+    categories: [] as string[], 
     description: "", 
     logo: "", 
     status: "active" as "active" | "inactive" 
@@ -47,6 +50,7 @@ export default function Brands() {
 
   const filtered = brands.filter((b) => 
     b.name.toLowerCase().includes(search.toLowerCase()) ||
+    (b.categoryNames && b.categoryNames.join(" ").toLowerCase().includes(search.toLowerCase())) ||
     (b.categoryName && b.categoryName.toLowerCase().includes(search.toLowerCase()))
   );
 
@@ -70,7 +74,9 @@ export default function Brands() {
         slug: b.slug,
         logo: b.logo || "",
         category: b.category,
+        categories: b.categories || (b.category ? [b.category] : []),
         categoryName: categoryMap.get(b.category) || b.category,
+        categoryNames: (b.categories || (b.category ? [b.category] : [])).map((slug: string) => categoryMap.get(slug) || slug),
         productCount: b.productCount || 0,
         status: b.status || "active",
         description: b.description || "",
@@ -89,7 +95,7 @@ export default function Brands() {
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ name: "", slug: "", category: "", description: "", logo: "", status: "active" });
+    setForm({ name: "", slug: "", categories: [], description: "", logo: "", status: "active" });
     setDialogOpen(true);
   };
 
@@ -98,7 +104,7 @@ export default function Brands() {
     setForm({ 
       name: brand.name, 
       slug: brand.slug, 
-      category: brand.category,
+      categories: brand.categories || (brand.category ? [brand.category] : []),
       description: brand.description, 
       logo: brand.logo, 
       status: brand.status 
@@ -113,8 +119,8 @@ export default function Brands() {
       toast({ title: "Brand name is required", variant: "destructive" });
       return;
     }
-    if (!form.category) {
-      toast({ title: "Please select a category", variant: "destructive" });
+    if (form.categories.length === 0) {
+      toast({ title: "Please select at least one category", variant: "destructive" });
       return;
     }
 
@@ -124,7 +130,8 @@ export default function Brands() {
           name: form.name,
           slug: form.slug || autoSlug(form.name),
           logo: form.logo,
-          category: form.category,
+          category: form.categories[0],
+          categories: form.categories,
           status: form.status,
           description: form.description,
         });
@@ -134,7 +141,8 @@ export default function Brands() {
           name: form.name,
           slug: form.slug || autoSlug(form.name),
           logo: form.logo,
-          category: form.category,
+          category: form.categories[0],
+          categories: form.categories,
           status: form.status,
           description: form.description,
         });
@@ -232,9 +240,13 @@ export default function Brands() {
             </div>
             <CardContent className="p-3 space-y-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
-                  {brand.categoryName}
-                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {(brand.categoryNames?.length ? brand.categoryNames : [brand.categoryName || brand.category]).filter(Boolean).map((category) => (
+                    <span key={category} className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
+                      {category}
+                    </span>
+                  ))}
+                </div>
               </div>
               <p className="text-xs text-muted-foreground line-clamp-2">{brand.description}</p>
               <div className="flex items-center justify-between">
@@ -286,19 +298,38 @@ export default function Brands() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
-              <Select value={form.category} onValueChange={(val) => setForm({ ...form, category: val })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.slug}>
-                      {cat.title}
-                    </SelectItem>
+              <Label>Categories *</Label>
+              <div className="rounded-lg border bg-background p-3 max-h-64 overflow-y-auto space-y-2">
+                {categories.map((cat) => {
+                  const checked = form.categories.includes(cat.slug);
+                  return (
+                    <label key={cat.id} className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-muted/50 cursor-pointer">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(value) => {
+                          const nextCategories = value
+                            ? [...form.categories, cat.slug]
+                            : form.categories.filter((slug) => slug !== cat.slug);
+                          setForm({ ...form, categories: nextCategories });
+                        }}
+                      />
+                      <span className="text-sm">{cat.title}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Select one or more categories this brand should appear in.
+              </p>
+              {form.categories.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {form.categories.map((slug) => (
+                    <span key={slug} className="text-xs px-2 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
+                      {categories.find((cat) => cat.slug === slug)?.title || slug}
+                    </span>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

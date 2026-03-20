@@ -50,6 +50,27 @@ type AdminProductView = AdminProduct & {
   variants?: VariantForm[];
 };
 
+const mapVariantToForm = (variant: any): VariantForm => {
+  const images = Array.isArray(variant.images) ? variant.images.filter(Boolean) : [];
+  const [mainImage = "", hoverImage = "", ...gallery] = images;
+
+  return {
+    sku: variant.sku || "",
+    name: variant.name || "",
+    image: variant.image || mainImage,
+    hoverImage: variant.hoverImage || hoverImage,
+    gallery: gallery.join("\n"),
+    price: variant.price?.toString() || "",
+    mrp: variant.mrp?.toString() || "",
+    stock: variant.stock?.toString() || "",
+    color: variant.attributes?.color || "",
+    storage: variant.attributes?.storage || "",
+    ram: variant.attributes?.ram || "",
+    size: variant.attributes?.size || "",
+    specifications: variant.specifications || [],
+  };
+};
+
 interface ProductForm {
   name: string;
   generalName: string;
@@ -155,7 +176,7 @@ export default function Products() {
   const { refreshCategories } = useCategories();
   const [products, setProducts] = useState<AdminProductView[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
-  const [brands, setBrands] = useState<{ id: string; name: string; slug: string; category: string }[]>([]);
+  const [brands, setBrands] = useState<{ id: string; name: string; slug: string; categories: string[] }[]>([]);
   const [filteredBrands, setFilteredBrands] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All");
@@ -199,17 +220,7 @@ export default function Products() {
           image: product.image,
           hoverImage: product.hoverImage,
           images: product.images || [],
-          variants: (product.variants || []).map((variant) => ({
-            sku: variant.sku || "",
-            name: variant.name || "",
-            price: variant.price?.toString() || "",
-            mrp: variant.mrp?.toString() || "",
-            stock: variant.stock?.toString() || "",
-            color: variant.attributes?.color || "",
-            storage: variant.attributes?.storage || "",
-            ram: variant.attributes?.ram || "",
-            size: variant.attributes?.size || "",
-          })),
+          variants: (product.variants || []).map(mapVariantToForm),
           category: product.category,
           description: product.description || "",
           price: product.price,
@@ -227,7 +238,7 @@ export default function Products() {
           id: b._id || b.id, 
           name: b.name, 
           slug: b.slug,
-          category: b.category 
+          categories: b.categories || (b.category ? [b.category] : [])
         })));
       } catch (error) {
         toast({ title: "Failed to load products", description: (error as Error).message, variant: "destructive" });
@@ -240,7 +251,7 @@ export default function Products() {
   // Filter brands based on selected category
   useEffect(() => {
     if (form.category) {
-      const categoryBrands = brands.filter(b => b.category === form.category);
+      const categoryBrands = brands.filter((b) => b.categories.includes(form.category));
       setFilteredBrands(categoryBrands);
       // If current brand doesn't belong to new category, reset it
       if (form.brand && form.brand !== "no-brand" && !categoryBrands.some(b => b.name === form.brand)) {
@@ -383,21 +394,7 @@ export default function Products() {
           image: updated.image,
           hoverImage: updated.hoverImage,
           images: updated.images || [],
-          variants: (updated.variants || []).map((variant) => ({
-            sku: variant.sku || "",
-            name: variant.name || "",
-            image: variant.image || "",
-            hoverImage: variant.hoverImage || "",
-            gallery: (variant.images || []).slice(2).join("\n"),
-            price: variant.price?.toString() || "",
-            mrp: variant.mrp?.toString() || "",
-            stock: variant.stock?.toString() || "",
-            color: variant.attributes?.color || "",
-            storage: variant.attributes?.storage || "",
-            ram: variant.attributes?.ram || "",
-            size: variant.attributes?.size || "",
-            specifications: variant.specifications || [],
-          })),
+          variants: (updated.variants || []).map(mapVariantToForm),
           category: updated.category,
           description: updated.description || "",
           price: updated.price,
@@ -419,21 +416,7 @@ export default function Products() {
           image: created.image,
           hoverImage: created.hoverImage,
           images: created.images || [],
-          variants: (created.variants || []).map((variant) => ({
-            sku: variant.sku || "",
-            name: variant.name || "",
-            image: variant.image || "",
-            hoverImage: variant.hoverImage || "",
-            gallery: (variant.images || []).slice(2).join("\n"),
-            price: variant.price?.toString() || "",
-            mrp: variant.mrp?.toString() || "",
-            stock: variant.stock?.toString() || "",
-            color: variant.attributes?.color || "",
-            storage: variant.attributes?.storage || "",
-            ram: variant.attributes?.ram || "",
-            size: variant.attributes?.size || "",
-            specifications: variant.specifications || [],
-          })),
+          variants: (created.variants || []).map(mapVariantToForm),
           category: created.category,
           description: created.description || "",
           price: created.price,

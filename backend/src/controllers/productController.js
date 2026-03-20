@@ -14,6 +14,56 @@ const buildUniqueSlug = async (baseSlug, excludeId) => {
   return slug;
 };
 
+const normalizeImageList = (...values) => {
+  const normalized = values
+    .flatMap((value) => {
+      if (!value) return [];
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string") {
+        return value
+          .split(/\r?\n|,/)
+          .map((entry) => entry.trim())
+          .filter(Boolean);
+      }
+      return [];
+    })
+    .map((value) => (typeof value === "string" ? value.trim() : value))
+    .filter(Boolean);
+
+  return [...new Set(normalized)];
+};
+
+const normalizeVariant = (variant = {}) => {
+  const images = normalizeImageList(
+    variant.images,
+    variant.gallery,
+    variant.image,
+    variant.hoverImage
+  );
+
+  return {
+    ...variant,
+    images: images.length > 0 ? images : undefined,
+    image: variant.image || images[0],
+    hoverImage: variant.hoverImage || images[1],
+  };
+};
+
+const normalizeProductPayload = (payload = {}) => {
+  const images = normalizeImageList(payload.images, payload.image, payload.hoverImage);
+  const variants = Array.isArray(payload.variants)
+    ? payload.variants.map((variant) => normalizeVariant(variant))
+    : [];
+
+  return {
+    ...payload,
+    images: images.length > 0 ? images : undefined,
+    image: payload.image || images[0],
+    hoverImage: payload.hoverImage || images[1],
+    variants,
+  };
+};
+
 const listProducts = async (req, res) => {
   const {
     q,
@@ -134,7 +184,7 @@ const getProduct = async (req, res) => {
 };
 
 const createProduct = async (req, res) => {
-  const payload = { ...req.body };
+  const payload = normalizeProductPayload({ ...req.body });
 
   if (!payload.title && payload.name) {
     payload.title = payload.name;
@@ -153,7 +203,7 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   const { id } = req.params;
-  const updates = { ...req.body };
+  const updates = normalizeProductPayload({ ...req.body });
 
   if (!updates.title && updates.name) {
     updates.title = updates.name;

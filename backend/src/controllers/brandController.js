@@ -14,12 +14,22 @@ const buildUniqueSlug = async (baseSlug, excludeId) => {
   return slug;
 };
 
+const normalizeCategories = (payload) => {
+  const categories = Array.isArray(payload.categories)
+    ? payload.categories
+    : payload.category
+      ? [payload.category]
+      : [];
+
+  return [...new Set(categories.map((category) => String(category).trim()).filter(Boolean))];
+};
+
 const listBrands = async (req, res) => {
   const { category } = req.query;
   const filter = {};
   
   if (category) {
-    filter.category = category;
+    filter.$or = [{ category }, { categories: category }];
   }
 
   const brands = await Brand.find(filter).sort("name");
@@ -66,17 +76,20 @@ const getBrand = async (req, res) => {
 
 const createBrand = async (req, res) => {
   const payload = { ...req.body };
+  const categories = normalizeCategories(payload);
 
   if (!payload.name) {
     return res.status(400).json({ message: "Name is required" });
   }
 
-  if (!payload.category) {
-    return res.status(400).json({ message: "Category is required" });
+  if (categories.length === 0) {
+    return res.status(400).json({ message: "At least one category is required" });
   }
 
   const baseSlug = payload.slug ? slugify(payload.slug) : slugify(payload.name);
   payload.slug = await buildUniqueSlug(baseSlug);
+  payload.categories = categories;
+  payload.category = categories[0];
 
   const brand = await Brand.create(payload);
   return res.status(201).json({ brand });
@@ -85,6 +98,14 @@ const createBrand = async (req, res) => {
 const updateBrand = async (req, res) => {
   const { id } = req.params;
   const updates = { ...req.body };
+  const categories = normalizeCategories(updates);
+
+  if (categories.length === 0) {
+    return res.status(400).json({ message: "At least one category is required" });
+  }
+
+  updates.categories = categories;
+  updates.category = categories[0];
 
   if (updates.name && !updates.slug) {
     const baseSlug = slugify(updates.name);
