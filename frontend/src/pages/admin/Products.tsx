@@ -27,6 +27,25 @@ const badgeColor: Record<string, string> = {
   bestseller: "bg-purple-100 text-purple-700",
 };
 
+const EVMZONE_IMAGE_BASE_URL = "https://evmzone.com";
+const FALLBACK_PRODUCT_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#9ca3af" font-family="Arial, sans-serif" font-size="14">Image unavailable</text></svg>`,
+)}`;
+
+const getSafeProductImageUrl = (image?: string) => {
+  if (!image) return FALLBACK_PRODUCT_IMAGE;
+
+  const value = image.trim();
+  if (!value) return FALLBACK_PRODUCT_IMAGE;
+
+  if (value.startsWith("https://")) return value;
+  if (value.startsWith("http://")) return value.replace(/^http:\/\//i, "https://");
+  if (value.startsWith("//")) return `https:${value}`;
+  if (value.startsWith("/")) return `${EVMZONE_IMAGE_BASE_URL}${value}`;
+
+  return `${EVMZONE_IMAGE_BASE_URL}/${value}`;
+};
+
 type Spec = { feature: string; value: string };
 type VariantForm = {
   sku: string;
@@ -216,7 +235,7 @@ export default function Products() {
         const mapped = productData.items.map((product) => ({
           id: product.id,
           name: product.title,
-          generalName: product.generalName || "",
+          generalName: (product as { generalName?: string }).generalName || "",
           image: product.image,
           hoverImage: product.hoverImage,
           images: product.images || [],
@@ -390,7 +409,7 @@ export default function Products() {
         setProducts((prev) => prev.map((p) => p.id === editingProduct.id ? {
           ...p,
           name: updated.title,
-          generalName: updated.generalName || "",
+          generalName: (updated as { generalName?: string }).generalName || "",
           image: updated.image,
           hoverImage: updated.hoverImage,
           images: updated.images || [],
@@ -412,7 +431,7 @@ export default function Products() {
         const newProduct: AdminProductView = {
           id: created.id,
           name: created.title,
-          generalName: created.generalName || "",
+          generalName: (created as { generalName?: string }).generalName || "",
           image: created.image,
           hoverImage: created.hoverImage,
           images: created.images || [],
@@ -552,7 +571,19 @@ export default function Products() {
                     <div className="flex items-center gap-3">
                       <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted border flex-shrink-0">
                         {p.image ? (
-                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                          <img
+                            src={getSafeProductImageUrl(p.image)}
+                            alt={p.name}
+                            className="block w-full h-auto object-cover"
+                            style={{ width: "100%", height: "auto", objectFit: "cover" }}
+                            loading="lazy"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (target.src !== FALLBACK_PRODUCT_IMAGE) {
+                                target.src = FALLBACK_PRODUCT_IMAGE;
+                              }
+                            }}
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                             <Package className="w-5 h-5" />
@@ -757,12 +788,21 @@ export default function Products() {
                   />
                   {form.image && (
                     <div className="flex items-start gap-4 mt-2 p-3 bg-muted/40 rounded-lg border">
-                      <img
-                        src={form.image}
-                        alt="Main preview"
-                        className="w-24 h-24 object-cover rounded-lg border shadow-sm"
-                        onError={(e) => { (e.target as HTMLImageElement).src = ""; (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
+                      <div className="w-24 flex-shrink-0">
+                        <img
+                          src={getSafeProductImageUrl(form.image)}
+                          alt="Main preview"
+                          className="block w-full h-auto object-cover rounded-lg border shadow-sm"
+                          style={{ width: "100%", height: "auto", objectFit: "cover" }}
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src !== FALLBACK_PRODUCT_IMAGE) {
+                              target.src = FALLBACK_PRODUCT_IMAGE;
+                            }
+                          }}
+                        />
+                      </div>
                       <div className="text-xs text-muted-foreground pt-1">
                         <p className="font-semibold text-foreground mb-0.5">Main Image Preview</p>
                         <p>This is shown on product cards and as the primary product photo.</p>
@@ -789,12 +829,21 @@ export default function Products() {
                   />
                   {form.hoverImage && (
                     <div className="flex items-start gap-4 mt-2 p-3 bg-muted/40 rounded-lg border">
-                      <img
-                        src={form.hoverImage}
-                        alt="Hover preview"
-                        className="w-24 h-24 object-cover rounded-lg border shadow-sm"
-                        onError={(e) => { (e.target as HTMLImageElement).src = ""; (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
+                      <div className="w-24 flex-shrink-0">
+                        <img
+                          src={getSafeProductImageUrl(form.hoverImage)}
+                          alt="Hover preview"
+                          className="block w-full h-auto object-cover rounded-lg border shadow-sm"
+                          style={{ width: "100%", height: "auto", objectFit: "cover" }}
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src !== FALLBACK_PRODUCT_IMAGE) {
+                              target.src = FALLBACK_PRODUCT_IMAGE;
+                            }
+                          }}
+                        />
+                      </div>
                       <div className="text-xs text-muted-foreground pt-1">
                         <p className="font-semibold text-foreground mb-0.5">Hover Image Preview</p>
                         <p>Shown when customer hovers over the product card.</p>
@@ -838,8 +887,19 @@ export default function Products() {
                 <div className="flex gap-2 mt-2">
                   {[form.image, form.hoverImage, ...form.gallery.map((s) => s.trim()).filter(Boolean)].filter(Boolean).map((url, i) => (
                     <div key={i} className="w-14 h-14 rounded-lg border overflow-hidden bg-muted">
-                      <img src={url} alt="" className="w-full h-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      <img
+                        src={getSafeProductImageUrl(url)}
+                        alt=""
+                        className="block w-full h-auto object-cover"
+                        style={{ width: "100%", height: "auto", objectFit: "cover" }}
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src !== FALLBACK_PRODUCT_IMAGE) {
+                            target.src = FALLBACK_PRODUCT_IMAGE;
+                          }
+                        }}
+                      />
                     </div>
                   ))}
                   {[form.image, form.hoverImage].filter(Boolean).length < 2 && (

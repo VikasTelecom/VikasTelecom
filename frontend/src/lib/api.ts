@@ -15,6 +15,7 @@ type ApiProduct = {
   _id?: string;
   title?: string;
   name?: string;
+  generalName?: string;
   slug?: string;
   image?: string;
   hoverImage?: string;
@@ -150,6 +151,7 @@ const normalizeProduct = (product: ApiProduct) => {
   return {
     id: product.id || product._id || "",
     title: product.title || product.name || "",
+    generalName: product.generalName || "",
     slug: product.slug || "",
     image: product.image || "",
     hoverImage: product.hoverImage || product.image || "",
