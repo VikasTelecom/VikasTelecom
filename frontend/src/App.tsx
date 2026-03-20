@@ -112,4 +112,4 @@ const App = () => (
 );
 
 export default App;
->>>>>>> 5963ee4 (new code)
+
