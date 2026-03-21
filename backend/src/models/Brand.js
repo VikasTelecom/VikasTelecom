@@ -5,7 +5,7 @@ const brandSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true },
     logo: { type: String },
-    category: { type: String, required: true }, // Primary category slug for compatibility
+    category: { type: String, default: "" }, // Primary category slug for compatibility
     categories: [{ type: String, trim: true }],
     productCount: { type: Number, default: 0 },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
