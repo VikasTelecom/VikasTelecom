@@ -24,6 +24,17 @@ const normalizeCategories = (payload) => {
   return [...new Set(categories.map((category) => String(category).trim()).filter(Boolean))];
 };
 
+const serializeBrand = (brand) => {
+  const brandObject = brand.toObject();
+  const categories = normalizeCategories(brandObject);
+
+  return {
+    ...brandObject,
+    categories,
+    category: brandObject.category || categories[0] || "",
+  };
+};
+
 const listBrands = async (req, res) => {
   const { category } = req.query;
   const filter = {};
@@ -43,7 +54,7 @@ const listBrands = async (req, res) => {
       });
       
       return {
-        ...brand.toObject(),
+        ...serializeBrand(brand),
         productCount,
       };
     })
@@ -71,7 +82,7 @@ const getBrand = async (req, res) => {
     return res.status(404).json({ message: "Brand not found" });
   }
 
-  return res.json({ brand });
+  return res.json({ brand: serializeBrand(brand) });
 };
 
 const createBrand = async (req, res) => {
@@ -92,7 +103,7 @@ const createBrand = async (req, res) => {
   payload.category = categories[0];
 
   const brand = await Brand.create(payload);
-  return res.status(201).json({ brand });
+  return res.status(201).json({ brand: serializeBrand(brand) });
 };
 
 const updateBrand = async (req, res) => {
@@ -121,7 +132,7 @@ const updateBrand = async (req, res) => {
     return res.status(404).json({ message: "Brand not found" });
   }
 
-  return res.json({ brand });
+  return res.json({ brand: serializeBrand(brand) });
 };
 
 const deleteBrand = async (req, res) => {

@@ -31,6 +31,8 @@ interface Category {
   slug: string;
 }
 
+const normalizeCategoryList = (value?: string[] | null) => [...new Set((value || []).map((item) => item.trim()).filter(Boolean))];
+
 export default function Brands() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -74,9 +76,9 @@ export default function Brands() {
         slug: b.slug,
         logo: b.logo || "",
         category: b.category,
-        categories: b.categories || (b.category ? [b.category] : []),
+        categories: normalizeCategoryList(b.categories || (b.category ? [b.category] : [])),
         categoryName: categoryMap.get(b.category) || b.category,
-        categoryNames: (b.categories || (b.category ? [b.category] : [])).map((slug: string) => categoryMap.get(slug) || slug),
+        categoryNames: normalizeCategoryList(b.categories || (b.category ? [b.category] : [])).map((slug: string) => categoryMap.get(slug) || slug),
         productCount: b.productCount || 0,
         status: b.status || "active",
         description: b.description || "",
@@ -130,7 +132,6 @@ export default function Brands() {
           name: form.name,
           slug: form.slug || autoSlug(form.name),
           logo: form.logo,
-          category: form.categories[0],
           categories: form.categories,
           status: form.status,
           description: form.description,
@@ -141,7 +142,6 @@ export default function Brands() {
           name: form.name,
           slug: form.slug || autoSlug(form.name),
           logo: form.logo,
-          category: form.categories[0],
           categories: form.categories,
           status: form.status,
           description: form.description,
