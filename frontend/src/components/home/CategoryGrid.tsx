@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategories } from "@/contexts/CategoriesContext";
+
+const MotionLink = motion(Link);
 
 const FALLBACK_CATEGORY_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" rx="32" fill="#f4f4f5"/><rect x="56" y="56" width="288" height="288" rx="28" fill="#e4e4e7"/><path d="M104 274l66-76 44 48 30-28 56 56H104z" fill="#c4c4c8"/><circle cx="144" cy="154" r="24" fill="#d4d4d8"/></svg>'
@@ -23,9 +26,9 @@ export const CategoryGrid = () => {
         </div>
         <div className="flex overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-4 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
           {items.map((cat, i) => (
-            <motion.a
+            <MotionLink
               key={cat.id}
-              href={`/category/${cat.slug}`}
+              to={`/categories/${cat.slug}`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -48,7 +51,7 @@ export const CategoryGrid = () => {
                 <h3 className="font-semibold text-background text-sm sm:text-base">{cat.title}</h3>
                 <p className="text-background/70 text-xs">{cat.productCount} Products</p>
               </div>
-            </motion.a>
+            </MotionLink>
           ))}
         </div>
       </div>
