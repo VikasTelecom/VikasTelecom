@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterSidebar, Filters } from "@/components/category/FilterSidebar";
 import { Product } from "@/data/products";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Select,
   SelectContent,
@@ -56,6 +57,8 @@ const CategoryPage = ({ title, description, products, loading = false }: Categor
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const isMobile = useIsMobile();
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -141,6 +144,20 @@ const CategoryPage = ({ title, description, products, loading = false }: Categor
             <SlidersHorizontal className="w-4 h-4" />
             Filters
           </button>
+          <div className="flex-1">
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger className="rounded-xl">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="featured">Featured</SelectItem>
+                <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                <SelectItem value="best-selling">Best Selling</SelectItem>
+                <SelectItem value="newest">Newest</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="flex gap-8">
@@ -193,7 +210,7 @@ const CategoryPage = ({ title, description, products, loading = false }: Categor
                 ))}
               </div>
             ) : paginatedProducts.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 lg:gap-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
                 {paginatedProducts.map((product, i) => (
                   <ProductCard key={product.id} product={product} index={i} />
                 ))}

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import type { Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const FALLBACK_PRODUCT_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" rx="32" fill="#f4f4f5"/><rect x="56" y="56" width="288" height="288" rx="28" fill="#e4e4e7"/><path d="M104 274l66-76 44 48 30-28 56 56H104z" fill="#c4c4c8"/><circle cx="144" cy="154" r="24" fill="#d4d4d8"/></svg>'
@@ -21,6 +22,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const wishlisted = isInWishlist(product.id);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setHasImageError(false);
@@ -32,11 +34,13 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     ? product.hoverImage || product.images?.[1] || FALLBACK_PRODUCT_IMAGE
     : product.image || product.images?.[0] || FALLBACK_PRODUCT_IMAGE;
 
+  const showQuickAdd = isMobile || isHovered;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1, y: -4 }}
+      whileHover={!isMobile ? { scale: 1, y: -4 } : undefined}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ delay: index * 0.05, duration: 0.15 }}
       onMouseEnter={() => setIsHovered(true)}
@@ -85,13 +89,13 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
         {/* Quick Add */}
         <motion.div
           initial={false}
-          animate={{ y: isHovered ? 0 : "100%", opacity: isHovered ? 1 : 0 }}
+          animate={{ y: showQuickAdd ? 0 : "100%", opacity: showQuickAdd ? 1 : 0 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
           className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent"
         >
           <motion.button
             onClick={() => addToCart(product)}
-            whileHover={{ scale: 1.05 }}
+            whileHover={!isMobile ? { scale: 1.05 } : undefined}
             whileTap={{ scale: 0.95 }}
             transition={{ duration: 0.08 }}
             className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg"

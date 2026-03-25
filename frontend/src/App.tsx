@@ -48,7 +48,7 @@ function AppContent() {
   const isAdmin = location.pathname.startsWith("/admin");
 
   return (
-    <>
+    <div className={!isAdmin ? "pb-mobile-nav" : undefined}>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/collections/audio" element={<AudioCategory />} />
@@ -87,7 +87,7 @@ function AppContent() {
       </Routes>
       {!isAdmin && <MobileBottomNav />}
       {!isAdmin && <WhatsAppButton />}
-    </>
+    </div>
   );
 }
 

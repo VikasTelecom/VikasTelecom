@@ -114,4 +114,10 @@
   .text-gradient-primary {
     @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
   }
+
+  @media (max-width: 767px) {
+    .pb-mobile-nav {
+      padding-bottom: calc(56px + env(safe-area-inset-bottom));
+    }
+  }
 }

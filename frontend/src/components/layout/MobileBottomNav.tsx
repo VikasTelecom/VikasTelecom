@@ -16,7 +16,7 @@ const navItems = [
   { label: "WhatsApp", icon: null, customIcon: WhatsAppIcon, path: "#whatsapp" },
   { label: "Categories", icon: LayoutGrid, path: "#categories" },
   { label: "Log In", icon: User, path: "/login" },
-  { label: "Cart", icon: ShoppingCart, path: "/cart" },
+  { label: "Cart", icon: ShoppingCart, path: "#cart" },
 ];
 
 export const MobileBottomNav = () => {
@@ -48,16 +48,17 @@ export const MobileBottomNav = () => {
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-[0_-2px_12px_-2px_hsl(var(--foreground)/0.08)] md:hidden">
         <div className="flex items-stretch">
           {navItems.map((item: any, i) => {
-            const isActive = item.path !== "#categories" && pathname === item.path;
+            const isActive = item.path.startsWith("/") && pathname === item.path;
             const Icon = item.icon;
             const CustomIcon = item.customIcon;
             const isCart = item.label === "Cart";
             const isWhatsApp = item.label === "WhatsApp";
+            const isAction = item.path.startsWith("#");
 
             return (
               <div key={item.label} className="flex flex-1">
                 <Link
-                  to={item.path === "#categories" ? pathname : item.path}
+                  to={isAction ? pathname : item.path}
                   onClick={(e) => handleClick(item, e)}
                   className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] relative"
                 >
