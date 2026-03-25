@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { api } from "@/lib/api";
+import { categories as fallbackCategories } from "@/data/categories";
 import type { Category } from "@/data/categories";
 
 interface CategoriesContextType {
@@ -11,7 +12,7 @@ interface CategoriesContextType {
 const CategoriesContext = createContext<CategoriesContextType | undefined>(undefined);
 
 export const CategoriesProvider = ({ children }: { children: ReactNode }) => {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(fallbackCategories);
   const [loading, setLoading] = useState(true);
 
   const fetchCategories = useCallback(async () => {
@@ -20,9 +21,12 @@ export const CategoriesProvider = ({ children }: { children: ReactNode }) => {
       const data = await api.fetchCategories();
       if (data.length > 0) {
         setCategories(data);
+      } else {
+        setCategories(fallbackCategories);
       }
     } catch (error) {
       console.error("Failed to fetch categories:", error);
+      setCategories(fallbackCategories);
     } finally {
       setLoading(false);
     }
