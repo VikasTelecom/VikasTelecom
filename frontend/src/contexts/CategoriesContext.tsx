@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { api } from "@/lib/api";
-import { categories as fallbackCategories } from "@/data/categories";
 import type { Category } from "@/data/categories";
 
 interface CategoriesContextType {
@@ -12,8 +11,8 @@ interface CategoriesContextType {
 const CategoriesContext = createContext<CategoriesContextType | undefined>(undefined);
 
 export const CategoriesProvider = ({ children }: { children: ReactNode }) => {
-  const [categories, setCategories] = useState<Category[]>(fallbackCategories);
-  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);

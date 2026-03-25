@@ -9,6 +9,7 @@ const CategorySlug = () => {
   const { slug } = useParams();
   const { categories } = useCategories();
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const category = useMemo(
     () => categories.find((item) => item.slug === slug),
@@ -20,11 +21,13 @@ const CategorySlug = () => {
 
     if (!slug) {
       setProducts([]);
+      setLoading(false);
       return () => {
         isMounted = false;
       };
     }
 
+    setLoading(true);
     api.fetchProducts({ category: slug, limit: 200 })
       .then((data) => {
         if (isMounted) {
@@ -34,6 +37,11 @@ const CategorySlug = () => {
       .catch(() => {
         if (isMounted) {
           setProducts([]);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
         }
       });
 
@@ -45,7 +53,7 @@ const CategorySlug = () => {
   const title = category?.title || (slug ? slug.replace(/-/g, " ") : "Category");
   const description = category?.description || "Browse products in this category.";
 
-  return <CategoryPage title={title} description={description} products={products} />;
+  return <CategoryPage title={title} description={description} products={products} loading={loading} />;
 };
 
 export default CategorySlug;

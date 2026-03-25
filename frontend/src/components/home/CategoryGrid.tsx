@@ -1,31 +1,18 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { categories as fallbackCategories } from "@/data/categories";
-import { api } from "@/lib/api";
-import type { Category } from "@/data/categories";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCategories } from "@/contexts/CategoriesContext";
 
 const FALLBACK_CATEGORY_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" rx="32" fill="#f4f4f5"/><rect x="56" y="56" width="288" height="288" rx="28" fill="#e4e4e7"/><path d="M104 274l66-76 44 48 30-28 56 56H104z" fill="#c4c4c8"/><circle cx="144" cy="154" r="24" fill="#d4d4d8"/></svg>'
 )}`;
 
 export const CategoryGrid = () => {
-  const [items, setItems] = useState<Category[]>(fallbackCategories);
+  const { categories, loading } = useCategories();
+  const items = categories.filter((cat) => cat.status !== "inactive");
 
-  useEffect(() => {
-    let isMounted = true;
-
-    api.fetchCategories()
-      .then((data) => {
-        if (isMounted && data.length > 0) {
-          setItems(data);
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  if (loading) {
+    return <CategoryGridSkeleton />;
+  }
 
   return (
     <section className="py-12 lg:py-16">
@@ -62,6 +49,29 @@ export const CategoryGrid = () => {
                 <p className="text-background/70 text-xs">{cat.productCount} Products</p>
               </div>
             </motion.a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const CategoryGridSkeleton = () => {
+  return (
+    <section className="py-12 lg:py-16">
+      <div className="container-main">
+        <div className="text-center mb-10">
+          <Skeleton className="mx-auto mb-3 h-8 w-56" />
+          <Skeleton className="mx-auto h-4 w-72" />
+        </div>
+        <div className="flex overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-4 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              className="flex-shrink-0 w-[40%] md:w-auto snap-start aspect-square rounded-2xl overflow-hidden bg-muted"
+            >
+              <Skeleton className="h-full w-full rounded-none" />
+            </div>
           ))}
         </div>
       </div>

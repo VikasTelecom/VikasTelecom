@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { ProductCard } from "@/components/product/ProductCard";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FilterSidebar, Filters } from "@/components/category/FilterSidebar";
 import { Product } from "@/data/products";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -36,11 +37,12 @@ interface CategoryPageProps {
   title: string;
   description: string;
   products: Product[];
+  loading?: boolean;
 }
 
 import { Label } from "@/components/ui/label";
 
-const CategoryPage = ({ title, description, products }: CategoryPageProps) => {
+const CategoryPage = ({ title, description, products, loading = false }: CategoryPageProps) => {
   const maxPrice = useMemo(() => getMaxPrice(products), [products]);
   const brands = useMemo(() => {
     const unique = new Set(
@@ -197,7 +199,20 @@ const CategoryPage = ({ title, description, products }: CategoryPageProps) => {
               </Select>
             </div>
 
-            {paginatedProducts.length > 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
+                {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, index) => (
+                  <div key={index} className="rounded-2xl border border-border/50 overflow-hidden bg-card">
+                    <Skeleton className="aspect-square w-full rounded-none" />
+                    <div className="p-4 space-y-3">
+                      <Skeleton className="h-4 w-4/5" />
+                      <Skeleton className="h-4 w-3/5" />
+                      <Skeleton className="h-5 w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : paginatedProducts.length > 0 ? (
               isMobile ? (
                 <div className="w-full space-y-4">
                   <Label className="text-lg font-semibold">Select Product</Label>
