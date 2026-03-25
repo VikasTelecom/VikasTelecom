@@ -34,7 +34,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     ? product.hoverImage || product.images?.[1] || FALLBACK_PRODUCT_IMAGE
     : product.image || product.images?.[0] || FALLBACK_PRODUCT_IMAGE;
 
-  const showQuickAdd = isMobile || isHovered;
+  const showQuickAdd = !isMobile && isHovered;
 
   return (
     <motion.div
@@ -86,28 +86,34 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             }`}
           />
         </motion.button>
-        {/* Quick Add */}
-        <motion.div
-          initial={false}
-          animate={{ y: showQuickAdd ? 0 : "100%", opacity: showQuickAdd ? 1 : 0 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent"
-        >
-          <motion.button
-            onClick={() => addToCart(product)}
-            whileHover={!isMobile ? { scale: 1.05 } : undefined}
-            whileTap={{ scale: 0.95 }}
-            transition={{ duration: 0.08 }}
-            className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg"
+        {/* Quick Add (desktop/hover only) */}
+        {!isMobile && (
+          <motion.div
+            initial={false}
+            animate={{ y: showQuickAdd ? 0 : "100%", opacity: showQuickAdd ? 1 : 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent"
           >
-            <ShoppingCart className="w-4 h-4" />
-            Add to Cart
-          </motion.button>
-        </motion.div>
+            <motion.button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addToCart(product);
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.08 }}
+              className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Add to Cart
+            </motion.button>
+          </motion.div>
+        )}
       </Link>
 
       {/* Info */}
-      <div className="p-4 bg-gradient-to-b from-background to-muted/20 flex flex-col h-32">
+      <div className="p-4 bg-gradient-to-b from-background to-muted/20 flex flex-col flex-1">
         <Link to={`/product/${product.id}`}>
           <motion.h3 
             className="font-medium text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-100 h-10"
@@ -129,6 +135,18 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           <span className="text-sm text-muted-foreground line-through">₹{product.mrp.toLocaleString()}</span>
           <span className="text-xs font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-100">{product.discount}% off</span>
         </motion.div>
+
+        {/* Mobile Add to Cart (pinned to card bottom) */}
+        {isMobile && (
+          <button
+            type="button"
+            onClick={() => addToCart(product)}
+            className="mt-3 w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Add to Cart
+          </button>
+        )}
       </div>
     </motion.div>
   );

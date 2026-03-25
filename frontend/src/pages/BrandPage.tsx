@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { Product } from "@/data/products";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Brand {
   id?: string;
@@ -28,6 +29,7 @@ const BrandPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const loadBrandAndProducts = async () => {
@@ -68,6 +70,13 @@ const BrandPage = () => {
       setFilteredProducts(products.filter((p) => p.category === selectedCategory));
     }
   }, [selectedCategory, products]);
+
+  // If the category filter UI is hidden (mobile), ensure we don't get stuck in a filtered state.
+  useEffect(() => {
+    if (isMobile && selectedCategory !== "all") {
+      setSelectedCategory("all");
+    }
+  }, [isMobile, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -120,7 +129,7 @@ const BrandPage = () => {
 
         {/* Category Filter */}
         {availableCategories.length > 0 && (
-          <div className="container-main mb-6">
+          <div className="container-main mb-6 hidden md:block">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

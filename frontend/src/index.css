@@ -45,6 +45,14 @@
     --badge-sale: 0 84% 55%;
     --badge-new: 145 63% 42%;
 
+    /* Mobile listing CTA (Amazon-inspired) */
+    --cta-yellow: 48 100% 55%;
+    --cta-yellow-hover: 48 100% 50%;
+
+    /* Mobile listing CTA (Amazon-inspired) */
+    --cta-yellow: 48 100% 55%;
+    --cta-yellow-hover: 48 100% 50%;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;

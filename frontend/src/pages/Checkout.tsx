@@ -29,6 +29,8 @@ interface Address {
 type PaymentMethod = "cod" | "razorpay" | "upi" | "card" | "netbanking";
 
 const progressSteps = ["Cart", "Address", "Payment", "Review", "Success"] as const;
+const UPI_PAYEE_ID = "ranchhodbhai3@icic";
+const UPI_PAYEE_NAME = "Vikash Telecom";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -84,6 +86,18 @@ const Checkout = () => {
     date.setDate(date.getDate() + 5);
     return date.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
   }, []);
+
+  const buildUpiDeepLink = (amount: number, orderRef: string) => {
+    const params = new URLSearchParams({
+      pa: UPI_PAYEE_ID,
+      pn: UPI_PAYEE_NAME,
+      am: amount.toFixed(2),
+      cu: "INR",
+      tn: `Order ${orderRef}`,
+      tr: orderRef,
+    });
+    return `upi://pay?${params.toString()}`;
+  };
 
   const validateField = (field: string, value: string) => {
     if (["name", "phone", "line1", "city", "state", "postalCode"].includes(field) && !value.trim()) {
@@ -248,6 +262,20 @@ const Checkout = () => {
         placedAt: new Date().toISOString(),
       };
       localStorage.setItem("last_order", JSON.stringify(summary));
+
+      if (paymentMethod === "upi") {
+        const orderRef = summary.id || `VT${Date.now()}`;
+        const upiDeepLink = buildUpiDeepLink(finalTotal, orderRef);
+
+        // Opens installed UPI apps (GPay/PhonePe/Paytm/BHIM) on supported devices.
+        window.location.href = upiDeepLink;
+        toast({
+          title: "Redirecting to UPI app...",
+          description: `Pay ₹${finalTotal.toLocaleString("en-IN")} to ${UPI_PAYEE_ID}`,
+        });
+        return;
+      }
+
       toast({ title: "Order placed successfully!" });
       clearCart();
       setTimeout(() => navigate("/checkout/success"), 500);
@@ -487,6 +515,11 @@ const Checkout = () => {
                   Secure payment with bank-grade encryption.
                 </div>
               )}
+              {paymentMethod === "upi" && (
+                <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm text-foreground">
+                  UPI ID: <span className="font-semibold">{UPI_PAYEE_ID}</span>
+                </div>
+              )}
             </div>
 
             <div className="border border-border rounded-2xl p-5 sm:p-6 bg-white space-y-4">
@@ -623,7 +656,9 @@ const Checkout = () => {
                     Processing...
                   </span>
                 ) : (
-                  `Place Order — ₹${finalTotal.toLocaleString()}`
+                  paymentMethod === "upi"
+                    ? `Pay via UPI — ₹${finalTotal.toLocaleString("en-IN")}`
+                    : `Place Order — ₹${finalTotal.toLocaleString("en-IN")}`
                 )}
               </Button>
               <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
@@ -661,7 +696,7 @@ const Checkout = () => {
             <p className="font-semibold">₹{finalTotal.toLocaleString()}</p>
           </div>
           <Button onClick={handlePay} disabled={loading || items.length === 0} className="flex-1">
-            {loading ? "Processing..." : "Place Order"}
+            {loading ? "Processing..." : paymentMethod === "upi" ? "Pay via UPI" : "Place Order"}
           </Button>
         </div>
       </div>

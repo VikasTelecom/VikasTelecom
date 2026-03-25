@@ -24,7 +24,26 @@ const addItem = async (req, res) => {
     { new: true, upsert: true }
   );
 
-  const existing = cart.items.find((item) => item.product.toString() === productId);
+  const normalizeVariant = (value) => {
+    if (!value) return null;
+    return {
+      sku: value.sku || null,
+      name: value.name || null,
+      attributes: {
+        color: value.attributes?.color || null,
+        storage: value.attributes?.storage || null,
+        ram: value.attributes?.ram || null,
+        size: value.attributes?.size || null,
+      },
+    };
+  };
+
+  const incomingVariant = normalizeVariant(variant);
+  const existing = cart.items.find((item) => {
+    if (item.product.toString() !== productId) return false;
+    const itemVariant = normalizeVariant(item.variant);
+    return JSON.stringify(itemVariant) === JSON.stringify(incomingVariant);
+  });
 
   if (existing) {
     existing.quantity += Number(quantity);

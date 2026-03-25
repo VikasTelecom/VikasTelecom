@@ -25,6 +25,8 @@ import ResetPassword from "./pages/ResetPassword";
 import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
+import CartPage from "./pages/Cart";
+import OrdersPage from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
@@ -62,6 +64,8 @@ function AppContent() {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/support" element={<Support />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/checkout/cancel" element={<CheckoutCancel />} />
         <Route path="/login" element={<Login />} />

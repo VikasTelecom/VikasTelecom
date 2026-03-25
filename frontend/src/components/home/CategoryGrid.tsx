@@ -24,7 +24,7 @@ export const CategoryGrid = () => {
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Shop by Category</h2>
           <p className="text-muted-foreground">Find the perfect gadget for your needs</p>
         </div>
-        <div className="flex overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-4 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
+        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(96px,30vw)] overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-3 lg:grid-cols-8 md:gap-4 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
           {items.map((cat, i) => (
             <MotionLink
               key={cat.id}
@@ -33,7 +33,7 @@ export const CategoryGrid = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.05 }}
-              className="flex-shrink-0 w-[40%] md:w-auto snap-start group relative aspect-square rounded-2xl overflow-hidden bg-muted"
+              className="snap-start group relative aspect-square rounded-2xl overflow-hidden bg-muted"
             >
               <img
                 src={cat.image}
@@ -67,11 +67,11 @@ const CategoryGridSkeleton = () => {
           <Skeleton className="mx-auto mb-3 h-8 w-56" />
           <Skeleton className="mx-auto h-4 w-72" />
         </div>
-        <div className="flex overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-4 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
+        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(96px,30vw)] overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-3 lg:grid-cols-8 md:gap-4 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
-              className="flex-shrink-0 w-[40%] md:w-auto snap-start aspect-square rounded-2xl overflow-hidden bg-muted"
+              className="snap-start aspect-square rounded-2xl overflow-hidden bg-muted"
             >
               <Skeleton className="h-full w-full rounded-none" />
             </div>

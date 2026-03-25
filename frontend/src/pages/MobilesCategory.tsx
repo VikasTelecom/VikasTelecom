@@ -6,9 +6,11 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { ProductCard } from "@/components/product/ProductCard";
+import { AmazonMobileProductCard } from "@/components/product/AmazonMobileProductCard";
 import { MobileFilterSidebar, MobileFilters } from "@/components/category/MobileFilterSidebar";
 import { mobileProducts, MobileProduct } from "@/data/mobileProducts";
 import { api } from "@/lib/api";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -28,6 +30,7 @@ const defaultFilters: MobileFilters = {
 type SortOption = "featured" | "price-asc" | "price-desc" | "best-selling" | "newest";
 
 const MobilesCategory = () => {
+  const isMobile = useIsMobile();
   const [items, setItems] = useState<MobileProduct[]>(mobileProducts);
   const [filters, setFilters] = useState<MobileFilters>(defaultFilters);
   const [sortBy, setSortBy] = useState<SortOption>("featured");
@@ -154,18 +157,24 @@ const MobilesCategory = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
                 {paginatedProducts.map((product, i) => (
                   <div key={product.id} className="relative">
-                    <ProductCard product={product} index={i} />
-                    {/* RAM + Storage badge */}
-                    <div className="absolute bottom-[7.5rem] left-3 right-3 flex gap-1.5 pointer-events-none">
-                      <span className="flex items-center gap-1 bg-background/90 backdrop-blur-sm text-xs font-medium px-2 py-0.5 rounded-md border border-border/50">
-                        <Cpu className="w-3 h-3" />{product.ram}
-                      </span>
-                      <span className="flex items-center gap-1 bg-background/90 backdrop-blur-sm text-xs font-medium px-2 py-0.5 rounded-md border border-border/50">
-                        <HardDrive className="w-3 h-3" />{product.storage}
-                      </span>
-                    </div>
-                    {product.emi && (
-                      <p className="text-xs text-muted-foreground mt-1 px-4">EMI from {product.emi}</p>
+                    {isMobile ? (
+                      <AmazonMobileProductCard product={product} />
+                    ) : (
+                      <>
+                        <ProductCard product={product} index={i} />
+                        {/* RAM + Storage badge */}
+                        <div className="absolute bottom-[7.5rem] left-3 right-3 flex gap-1.5 pointer-events-none">
+                          <span className="flex items-center gap-1 bg-background/90 backdrop-blur-sm text-xs font-medium px-2 py-0.5 rounded-md border border-border/50">
+                            <Cpu className="w-3 h-3" />{product.ram}
+                          </span>
+                          <span className="flex items-center gap-1 bg-background/90 backdrop-blur-sm text-xs font-medium px-2 py-0.5 rounded-md border border-border/50">
+                            <HardDrive className="w-3 h-3" />{product.storage}
+                          </span>
+                        </div>
+                        {product.emi && (
+                          <p className="text-xs text-muted-foreground mt-1 px-4">EMI from {product.emi}</p>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}

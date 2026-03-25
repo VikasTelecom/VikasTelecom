@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, User, ShoppingCart, Menu, X, ChevronDown, Home, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -41,8 +41,9 @@ export const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const { totalItems, setIsCartOpen } = useCart();
+  const { totalItems } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const brandsHoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -330,7 +331,7 @@ export const Header = () => {
               )}
 
               <button
-                onClick={() => setIsCartOpen(true)}
+                onClick={() => navigate("/cart")}
                 className="p-2 rounded-full hover:bg-muted transition-colors relative"
                 aria-label="Cart"
               >

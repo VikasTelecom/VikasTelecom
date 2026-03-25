@@ -12,7 +12,12 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  // lovable-tagger can run ESLint-like checks and fail dev startup when the repo
+  // has existing lint errors. Keep it opt-in so `npm run dev` always starts.
+  plugins: [
+    react(),
+    mode === "development" && process.env.VITE_ENABLE_TAGGER === "true" && componentTagger(),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

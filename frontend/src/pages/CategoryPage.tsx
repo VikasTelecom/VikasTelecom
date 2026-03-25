@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { ProductCard } from "@/components/product/ProductCard";
+import { AmazonMobileProductCard } from "@/components/product/AmazonMobileProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterSidebar, Filters } from "@/components/category/FilterSidebar";
 import { Product } from "@/data/products";
@@ -212,7 +213,11 @@ const CategoryPage = ({ title, description, products, loading = false }: Categor
             ) : paginatedProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
                 {paginatedProducts.map((product, i) => (
-                  <ProductCard key={product.id} product={product} index={i} />
+                  isMobile ? (
+                    <AmazonMobileProductCard key={product.id} product={product} />
+                  ) : (
+                    <ProductCard key={product.id} product={product} index={i} />
+                  )
                 ))}
               </div>
             ) : (

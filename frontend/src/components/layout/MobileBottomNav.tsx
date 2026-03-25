@@ -16,21 +16,18 @@ const navItems = [
   { label: "WhatsApp", icon: null, customIcon: WhatsAppIcon, path: "#whatsapp" },
   { label: "Categories", icon: LayoutGrid, path: "#categories" },
   { label: "Log In", icon: User, path: "/login" },
-  { label: "Cart", icon: ShoppingCart, path: "#cart" },
+  { label: "Cart", icon: ShoppingCart, path: "/cart" },
 ];
 
 export const MobileBottomNav = () => {
   const { pathname } = useLocation();
-  const { totalItems, setIsCartOpen } = useCart();
+  const { totalItems } = useCart();
   const [showCategories, setShowCategories] = useState(false);
 
   const handleClick = (item: typeof navItems[0], e: React.MouseEvent) => {
     if (item.label === "Categories") {
       e.preventDefault();
       setShowCategories(true);
-    } else if (item.label === "Cart") {
-      e.preventDefault();
-      setIsCartOpen(true);
     } else if (item.label === "WhatsApp") {
       e.preventDefault();
       window.open("https://wa.me/919327511512?text=hello", "_blank");
