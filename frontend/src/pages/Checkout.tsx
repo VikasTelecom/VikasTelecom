@@ -29,7 +29,7 @@ interface Address {
 type PaymentMethod = "cod" | "upi";
 
 const progressSteps = ["Cart", "Address", "Payment", "Review", "Success"] as const;
-const UPI_PAYEE_ID = "ranchhodbhai3@icic";
+const UPI_PAYEE_ID = "ranchhodbhai3@icici";
 const UPI_PAYEE_NAME = "Vikash Telecom";
 
 const Checkout = () => {
@@ -48,6 +48,7 @@ const Checkout = () => {
   const [saveAddress, setSaveAddress] = useState(true);
   const [setAsDefault, setSetAsDefault] = useState(true);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [qrImageError, setQrImageError] = useState(false);
   const [form, setForm] = useState({
     label: "Home",
     name: "",
@@ -98,6 +99,22 @@ const Checkout = () => {
     });
     return `upi://pay?${params.toString()}`;
   };
+
+  const upiCheckoutRef = useMemo(() => `VTCHK${Date.now()}`, []);
+  const upiQrPayload = useMemo(
+    () => buildUpiDeepLink(finalTotal, upiCheckoutRef),
+    [finalTotal, upiCheckoutRef],
+  );
+  const upiQrImageUrl = useMemo(
+    () => `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(upiQrPayload)}`,
+    [upiQrPayload],
+  );
+
+  useEffect(() => {
+    if (paymentMethod === "upi") {
+      setQrImageError(false);
+    }
+  }, [paymentMethod, upiQrImageUrl]);
 
   const validateField = (field: string, value: string) => {
     if (["name", "phone", "line1", "city", "state", "postalCode"].includes(field) && !value.trim()) {
@@ -510,8 +527,25 @@ const Checkout = () => {
                 </div>
               )}
               {paymentMethod === "upi" && (
-                <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm text-foreground">
-                  UPI ID: <span className="font-semibold">{UPI_PAYEE_ID}</span>
+                <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm text-foreground space-y-3">
+                  <div>
+                    UPI ID: <span className="font-semibold">{UPI_PAYEE_ID}</span>
+                  </div>
+                  <div className="rounded-lg border border-primary/20 bg-white p-3">
+                    <p className="text-xs text-muted-foreground mb-2">Scan to pay ₹{finalTotal.toLocaleString("en-IN")}</p>
+                    {!qrImageError ? (
+                      <img
+                        src={upiQrImageUrl}
+                        alt={`UPI QR for ₹${finalTotal.toLocaleString("en-IN")}`}
+                        className="h-48 w-48 sm:h-56 sm:w-56 rounded-md border border-border bg-white"
+                        loading="lazy"
+                        onError={() => setQrImageError(true)}
+                      />
+                    ) : (
+                      <p className="text-xs text-destructive">Unable to load QR right now. Use UPI ID above to pay manually.</p>
+                    )}
+                    <p className="mt-2 text-xs text-muted-foreground">This QR is generated with your current order total and pays to {UPI_PAYEE_ID}.</p>
+                  </div>
                 </div>
               )}
             </div>
