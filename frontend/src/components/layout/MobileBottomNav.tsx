@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, LayoutGrid, User, ShoppingCart } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { MobileCategoriesPanel } from "./MobileCategoriesPanel";
 
@@ -11,20 +12,21 @@ const WhatsAppIcon = ({ className }: { className: string }) => (
   </svg>
 );
 
-const navItems = [
-  { label: "Home", icon: Home, path: "/" },
-  { label: "WhatsApp", icon: null, customIcon: WhatsAppIcon, path: "#whatsapp" },
-  { label: "Categories", icon: LayoutGrid, path: "#categories" },
-  { label: "Log In", icon: User, path: "/login" },
-  { label: "Cart", icon: ShoppingCart, path: "/cart" },
-];
-
 export const MobileBottomNav = () => {
   const { pathname } = useLocation();
   const { totalItems } = useCart();
+  const { isAuthenticated } = useAuth();
   const [showCategories, setShowCategories] = useState(false);
 
-  const handleClick = (item: typeof navItems[0], e: React.MouseEvent) => {
+  const navItems = [
+    { label: "Home", icon: Home, path: "/" },
+    { label: "WhatsApp", icon: null, customIcon: WhatsAppIcon, path: "#whatsapp" },
+    { label: "Categories", icon: LayoutGrid, path: "#categories" },
+    { label: isAuthenticated ? "Profile" : "Log In", icon: User, path: isAuthenticated ? "/profile" : "/login" },
+    { label: "Cart", icon: ShoppingCart, path: "/cart" },
+  ];
+
+  const handleClick = (item: (typeof navItems)[0], e: React.MouseEvent) => {
     if (item.label === "Categories") {
       e.preventDefault();
       setShowCategories(true);

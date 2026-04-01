@@ -6,6 +6,7 @@ interface User {
   id?: string;
   name: string;
   email: string;
+  phone?: string;
   role: "admin" | "user";
   status?: "active" | "blocked";
 }
@@ -15,6 +16,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<User>;
   signup: (name: string, email: string, phone: string, password: string) => Promise<User>;
+  updateProfile: (payload: { name?: string; phone?: string }) => Promise<User>;
   logout: () => void;
 }
 
@@ -62,6 +64,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return u;
   };
 
+  const updateProfile = async (payload: { name?: string; phone?: string }) => {
+    const data = await api.updateMe(payload);
+    const u: User = data.user as User;
+    setUser(u);
+    localStorage.setItem("auth_user", JSON.stringify(u));
+    return u;
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem("auth_user");
@@ -70,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -98,7 +98,7 @@ export const ProductTabs = ({ product }: ProductTabsProps) => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className="py-6"
+          className="px-5 py-6 lg:px-6"
         >
           <TabContent
             tab={activeTab}

@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Coupon = require("../models/Coupon");
+const Address = require("../models/Address");
 
 const createOrder = async (req, res) => {
   const items = Array.isArray(req.body.items) ? req.body.items : [];
@@ -34,6 +35,23 @@ const createOrder = async (req, res) => {
     return res.status(400).json({ message: "Order total is required" });
   }
 
+  let shippingAddress;
+  if (address) {
+    const savedAddress = await Address.findOne({ _id: address, user: req.user._id });
+    if (savedAddress) {
+      shippingAddress = {
+        name: savedAddress.name,
+        phone: savedAddress.phone,
+        line1: savedAddress.line1,
+        line2: savedAddress.line2,
+        city: savedAddress.city,
+        state: savedAddress.state,
+        postalCode: savedAddress.postalCode,
+        country: savedAddress.country,
+      };
+    }
+  }
+
   const order = await Order.create({
     user: req.user._id,
     customerName: req.user.name,
@@ -43,6 +61,7 @@ const createOrder = async (req, res) => {
     couponCode,
     discount,
     address,
+    shippingAddress,
   });
 
   return res.status(201).json({ order });

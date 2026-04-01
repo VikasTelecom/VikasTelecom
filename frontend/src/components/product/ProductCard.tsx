@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
-import { useWishlist } from "@/contexts/WishlistContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const FALLBACK_PRODUCT_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
@@ -20,8 +19,6 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [hasImageError, setHasImageError] = useState(false);
   const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
-  const wishlisted = isInWishlist(product.id);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -62,7 +59,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           <motion.span
             animate={{ rotate: isHovered ? [0, -10, 10, -10, 0] : 0 }}
             transition={{ duration: 0.2 }}
-            className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full text-primary-foreground ${
+            className={`absolute top-3 left-3 text-[10px] font-semibold px-2 py-0.5 rounded-full text-primary-foreground ${
               product.badge === "sale"
                 ? "bg-badge-sale"
                 : product.badge === "new"
@@ -73,19 +70,6 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             {product.badge === "sale" ? `-${product.discount}%` : product.badge === "new" ? "NEW" : "BEST"}
           </motion.span>
         )}
-        <motion.button
-          onClick={() => toggleWishlist(product.id)}
-          whileHover={{ scale: 1.15, rotate: 10 }}
-          whileTap={{ scale: 0.9 }}
-          transition={{ duration: 0.1 }}
-          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors duration-100"
-        >
-          <Heart
-            className={`w-4 h-4 transition-colors duration-100 ${
-              wishlisted ? "fill-primary text-primary" : "text-foreground/60"
-            }`}
-          />
-        </motion.button>
         {/* Quick Add (desktop/hover only) */}
         {!isMobile && (
           <motion.div
@@ -133,7 +117,9 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
         >
           <span className="font-bold text-foreground group-hover:text-primary transition-colors duration-100">₹{product.price.toLocaleString()}</span>
           <span className="text-sm text-muted-foreground line-through">₹{product.mrp.toLocaleString()}</span>
-          <span className="text-xs font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-100">{product.discount}% off</span>
+          {!isMobile && (
+            <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1 py-0.5 rounded group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-100">{product.discount}% off</span>
+          )}
         </motion.div>
 
         {/* Mobile Add to Cart (pinned to card bottom) */}

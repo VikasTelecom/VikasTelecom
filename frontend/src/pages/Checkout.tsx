@@ -45,6 +45,7 @@ const Checkout = () => {
   const [couponApplied, setCouponApplied] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showAddressForm, setShowAddressForm] = useState(false);
   const [saveAddress, setSaveAddress] = useState(true);
   const [setAsDefault, setSetAsDefault] = useState(true);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
@@ -68,9 +69,12 @@ const Checkout = () => {
       .then((data) => {
         const list = data as Address[];
         setAddresses(list);
+        setShowAddressForm(list.length === 0);
         if (list.length > 0) setSelectedAddressId(list[0]._id);
       })
-      .catch(() => {});
+      .catch(() => {
+        setShowAddressForm(true);
+      });
   }, [isAuthenticated]);
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
@@ -136,6 +140,7 @@ const Checkout = () => {
 
   const handleEditAddress = (address: Address) => {
     setEditingId(address._id);
+    setShowAddressForm(true);
     setForm({
       label: address.label || "Home",
       name: address.name,
@@ -193,6 +198,7 @@ const Checkout = () => {
         toast({ title: "Address saved" });
       }
       setEditingId(null);
+      setShowAddressForm(false);
       setFormErrors({});
       setForm({
         label: "Home",
@@ -350,6 +356,34 @@ const Checkout = () => {
 
               {isAuthenticated ? (
                 <div className="space-y-4">
+                  <div className="flex items-center justify-end">
+                    {!showAddressForm && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingId(null);
+                          setFormErrors({});
+                          setForm({
+                            label: "Home",
+                            name: "",
+                            phone: "",
+                            line1: "",
+                            line2: "",
+                            landmark: "",
+                            city: "",
+                            state: "",
+                            postalCode: "",
+                            country: "IN",
+                          });
+                          setShowAddressForm(true);
+                        }}
+                      >
+                        Add New Address
+                      </Button>
+                    )}
+                  </div>
+
                   {addresses.length > 0 && (
                     <div className="space-y-3">
                       {addresses.map((address) => (
@@ -404,77 +438,94 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  <div className="border-t border-border pt-4">
-                    <p className="text-sm font-semibold mb-3">{editingId ? "Edit Address" : "Add New Address"}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label>Full Name</Label>
-                        <Input value={form.name} onChange={(e) => handleFieldChange("name", e.target.value)} />
-                        {formErrors.name && <p className="text-xs text-destructive">{formErrors.name}</p>}
+                  {showAddressForm && (
+                    <div className="border-t border-border pt-4">
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <p className="text-sm font-semibold">{editingId ? "Edit Address" : "Add New Address"}</p>
+                        {addresses.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingId(null);
+                              setShowAddressForm(false);
+                              setFormErrors({});
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        )}
                       </div>
-                      <div className="space-y-1">
-                        <Label>Phone Number</Label>
-                        <Input value={form.phone} onChange={(e) => handleFieldChange("phone", e.target.value)} />
-                        {formErrors.phone && <p className="text-xs text-destructive">{formErrors.phone}</p>}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label>Full Name</Label>
+                          <Input value={form.name} onChange={(e) => handleFieldChange("name", e.target.value)} />
+                          {formErrors.name && <p className="text-xs text-destructive">{formErrors.name}</p>}
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Phone Number</Label>
+                          <Input value={form.phone} onChange={(e) => handleFieldChange("phone", e.target.value)} />
+                          {formErrors.phone && <p className="text-xs text-destructive">{formErrors.phone}</p>}
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Pincode</Label>
+                          <Input value={form.postalCode} onChange={(e) => handleFieldChange("postalCode", e.target.value)} />
+                          {formErrors.postalCode && <p className="text-xs text-destructive">{formErrors.postalCode}</p>}
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Address Type</Label>
+                          <select
+                            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            value={form.label}
+                            onChange={(e) => handleFieldChange("label", e.target.value)}
+                          >
+                            <option value="Home">Home</option>
+                            <option value="Work">Work</option>
+                          </select>
+                        </div>
+                        <div className="md:col-span-2 space-y-1">
+                          <Label>Address Line 1</Label>
+                          <Textarea value={form.line1} onChange={(e) => handleFieldChange("line1", e.target.value)} />
+                          {formErrors.line1 && <p className="text-xs text-destructive">{formErrors.line1}</p>}
+                        </div>
+                        <div className="md:col-span-2 space-y-1">
+                          <Label>Address Line 2</Label>
+                          <Input value={form.line2} onChange={(e) => handleFieldChange("line2", e.target.value)} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Landmark</Label>
+                          <Input value={form.landmark} onChange={(e) => handleFieldChange("landmark", e.target.value)} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>City</Label>
+                          <Input value={form.city} onChange={(e) => handleFieldChange("city", e.target.value)} />
+                          {formErrors.city && <p className="text-xs text-destructive">{formErrors.city}</p>}
+                        </div>
+                        <div className="space-y-1">
+                          <Label>State</Label>
+                          <Input value={form.state} onChange={(e) => handleFieldChange("state", e.target.value)} />
+                          {formErrors.state && <p className="text-xs text-destructive">{formErrors.state}</p>}
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Country</Label>
+                          <Input value={form.country} onChange={(e) => handleFieldChange("country", e.target.value)} />
+                        </div>
+                        <div className="md:col-span-2 flex flex-wrap gap-4 text-sm">
+                          <label className="flex items-center gap-2">
+                            <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} />
+                            Save this address to my account
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <input type="checkbox" checked={setAsDefault} onChange={(e) => setSetAsDefault(e.target.checked)} />
+                            Set as default address
+                          </label>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <Label>Pincode</Label>
-                        <Input value={form.postalCode} onChange={(e) => handleFieldChange("postalCode", e.target.value)} />
-                        {formErrors.postalCode && <p className="text-xs text-destructive">{formErrors.postalCode}</p>}
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Address Type</Label>
-                        <select
-                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                          value={form.label}
-                          onChange={(e) => handleFieldChange("label", e.target.value)}
-                        >
-                          <option value="Home">Home</option>
-                          <option value="Work">Work</option>
-                        </select>
-                      </div>
-                      <div className="md:col-span-2 space-y-1">
-                        <Label>Address Line 1</Label>
-                        <Textarea value={form.line1} onChange={(e) => handleFieldChange("line1", e.target.value)} />
-                        {formErrors.line1 && <p className="text-xs text-destructive">{formErrors.line1}</p>}
-                      </div>
-                      <div className="md:col-span-2 space-y-1">
-                        <Label>Address Line 2</Label>
-                        <Input value={form.line2} onChange={(e) => handleFieldChange("line2", e.target.value)} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Landmark</Label>
-                        <Input value={form.landmark} onChange={(e) => handleFieldChange("landmark", e.target.value)} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>City</Label>
-                        <Input value={form.city} onChange={(e) => handleFieldChange("city", e.target.value)} />
-                        {formErrors.city && <p className="text-xs text-destructive">{formErrors.city}</p>}
-                      </div>
-                      <div className="space-y-1">
-                        <Label>State</Label>
-                        <Input value={form.state} onChange={(e) => handleFieldChange("state", e.target.value)} />
-                        {formErrors.state && <p className="text-xs text-destructive">{formErrors.state}</p>}
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Country</Label>
-                        <Input value={form.country} onChange={(e) => handleFieldChange("country", e.target.value)} />
-                      </div>
-                      <div className="md:col-span-2 flex flex-wrap gap-4 text-sm">
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} />
-                          Save this address to my account
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" checked={setAsDefault} onChange={(e) => setSetAsDefault(e.target.checked)} />
-                          Set as default address
-                        </label>
+                      <div className="mt-4">
+                        <Button variant="outline" onClick={handleAddAddress}>{editingId ? "Update Address" : "Save Address"}</Button>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <Button variant="outline" onClick={handleAddAddress}>{editingId ? "Update Address" : "Save Address"}</Button>
-                    </div>
-                  </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground">

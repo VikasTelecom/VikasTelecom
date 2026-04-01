@@ -5,6 +5,7 @@ type ApiUser = {
   _id?: string;
   name: string;
   email: string;
+  phone?: string;
   role: "admin" | "user";
   status?: "active" | "blocked";
   createdAt?: string;
@@ -228,6 +229,12 @@ export const api = {
   },
   fetchMe: async () => {
     return apiRequest<{ user: ApiUser }>("/auth/me");
+  },
+  updateMe: async (payload: { name?: string; phone?: string }) => {
+    return apiRequest<{ user: ApiUser }>("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
   },
   fetchProducts: async (params?: Record<string, string | number | boolean | undefined>) => {
     const data = await apiRequest<Paginated<ApiProduct>>(`/products${buildQuery(params)}`);

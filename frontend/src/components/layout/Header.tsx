@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, User, ShoppingCart, Menu, X, ChevronDown, Home, LogOut } from "lucide-react";
+import { Search, User, ShoppingCart, Menu, X, ChevronDown, Home, LogOut, Package } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -307,10 +307,16 @@ export const Header = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {/* Future: add /profile page */}
-                    {/* <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild>
                       <Link to="/profile">Profile</Link>
-                    </DropdownMenuItem> */}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/orders" className="flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        <span>My Orders</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => logout()}
                       className="text-destructive cursor-pointer flex items-center gap-2"

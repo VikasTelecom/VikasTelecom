@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
+import { useCart } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CategoriesProvider } from "@/contexts/CategoriesContext";
@@ -27,6 +28,7 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import CheckoutCancel from "./pages/CheckoutCancel";
 import CartPage from "./pages/Cart";
 import OrdersPage from "./pages/Orders";
+import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
@@ -48,6 +50,7 @@ const queryClient = new QueryClient();
 function AppContent() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith("/admin");
+  const { isCartOpen } = useCart();
 
   return (
     <div className={!isAdmin ? "pb-mobile-nav" : undefined}>
@@ -66,6 +69,7 @@ function AppContent() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/profile" element={<UserProfile />} />
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/checkout/cancel" element={<CheckoutCancel />} />
         <Route path="/login" element={<Login />} />
@@ -89,8 +93,8 @@ function AppContent() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {!isAdmin && <MobileBottomNav />}
-      {!isAdmin && <WhatsAppButton />}
+      {!isAdmin && !isCartOpen && <MobileBottomNav />}
+      {!isAdmin && !isCartOpen && <WhatsAppButton />}
     </div>
   );
 }

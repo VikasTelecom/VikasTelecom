@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { ChevronRight, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ChevronRight, Loader2, User, Package, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useCategories } from "@/contexts/CategoriesContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 
 interface MobileMenuProps {
@@ -18,6 +19,8 @@ interface Brand {
 }
 
 export const MobileMenu = ({ onClose }: MobileMenuProps) => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
   const { categories: allCategories, loading } = useCategories();
   const categories = allCategories.filter((cat) => cat.status !== "inactive");
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -62,6 +65,65 @@ export const MobileMenu = ({ onClose }: MobileMenuProps) => {
         className="absolute left-0 top-0 bottom-0 w-[300px] bg-background shadow-card-hover overflow-y-auto"
       >
         <div className="p-6 pt-20">
+          {isAuthenticated ? (
+            <div className="mb-5 rounded-xl border border-border bg-muted/30 p-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Logged in as</p>
+              <p className="text-sm font-semibold truncate mt-1">{user?.name || "User"}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              <div className="mt-3 space-y-1">
+                <Link
+                  to="/profile"
+                  onClick={onClose}
+                  className="flex items-center justify-between py-2 px-2 text-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors"
+                >
+                  <span className="text-sm font-medium flex items-center gap-2"><User className="w-4 h-4" /> Profile</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </Link>
+                <Link
+                  to="/orders"
+                  onClick={onClose}
+                  className="flex items-center justify-between py-2 px-2 text-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors"
+                >
+                  <span className="text-sm font-medium flex items-center gap-2"><Package className="w-4 h-4" /> Orders</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    onClose();
+                    navigate("/");
+                  }}
+                  className="w-full flex items-center justify-between py-2 px-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                >
+                  <span className="text-sm font-medium flex items-center gap-2"><LogOut className="w-4 h-4" /> Log out</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-5 rounded-xl border border-border bg-muted/30 p-3">
+              <p className="text-sm font-semibold">Welcome to VikasTelecom</p>
+              <p className="text-xs text-muted-foreground mt-1">Log in to track orders and manage your profile.</p>
+              <div className="mt-3 flex gap-2">
+                <Link
+                  to="/login"
+                  onClick={onClose}
+                  className="inline-flex items-center justify-center rounded-md border border-border px-3 py-1.5 text-xs font-medium"
+                >
+                  Log In
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={onClose}
+                  className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            </div>
+          )}
+
           <nav className="space-y-1">
             <Link
               to="/"

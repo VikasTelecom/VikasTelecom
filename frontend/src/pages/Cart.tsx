@@ -14,7 +14,7 @@ const CartPage = () => {
       <Header />
       <CartDrawer />
 
-      <main className="pt-20">
+      <main className="pt-0">
         <div className="container-main py-6">
           <div className="flex items-center justify-between gap-3 mb-6">
             <h1 className="text-2xl lg:text-3xl font-bold">Your Cart</h1>

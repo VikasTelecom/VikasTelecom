@@ -86,6 +86,34 @@ interface ExtendedOrder extends AdminOrder {
   items: OrderItem[];
 }
 
+const looksLikeObjectId = (value?: string) => {
+  return Boolean(value && /^[a-f\d]{24}$/i.test(value.trim()));
+};
+
+const formatShippingAddress = (shippingAddress?: {
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}) => {
+  if (!shippingAddress) return "";
+
+  const parts = [
+    shippingAddress.line1,
+    shippingAddress.line2,
+    shippingAddress.city,
+    shippingAddress.state,
+    shippingAddress.postalCode,
+    shippingAddress.country,
+  ]
+    .map((part) => (part || "").trim())
+    .filter(Boolean);
+
+  return parts.join(", ");
+};
+
 export default function Orders() {
   const [orders, setOrders] = useState<ExtendedOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<ExtendedOrder | null>(null);
@@ -110,16 +138,15 @@ export default function Orders() {
           id: order.id || order._id || "",
           customer: order.customerName || "",
           email: order.email || "",
-          phone: order.phone || "+91 9876543210",
+          phone: order.phone || order.shippingAddress?.phone || "+91 9876543210",
           total: order.total || 0,
           status: order.status || "pending",
           paymentStatus: order.paymentStatus || "unpaid",
           paymentMethod: order.paymentMethod || "COD",
           date: order.createdAt ? new Date(order.createdAt).toISOString().slice(0, 10) : "",
           items: order.items || [],
-          address: order.shippingAddress
-            ? `${order.shippingAddress.line1 || ""} ${order.shippingAddress.city || ""}`.trim()
-            : order.address || "",
+          address: formatShippingAddress(order.shippingAddress)
+            || (looksLikeObjectId(order.address || "") ? "Address not available" : (order.address || "")),
           subtotal: order.subtotal || order.total - (order.shippingCost || 50) - (order.gst || 0),
           shippingCost: order.shippingCost || 50,
           gst: order.gst || ((order.total - (order.shippingCost || 50)) * 0.18),
