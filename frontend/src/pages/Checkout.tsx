@@ -26,7 +26,7 @@ interface Address {
   country?: string;
 }
 
-type PaymentMethod = "cod" | "razorpay" | "upi" | "card" | "netbanking";
+type PaymentMethod = "cod" | "upi";
 
 const progressSteps = ["Cart", "Address", "Payment", "Review", "Success"] as const;
 const UPI_PAYEE_ID = "ranchhodbhai3@icic";
@@ -474,10 +474,7 @@ const Checkout = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {[
                   { value: "cod", label: "Cash on Delivery", note: "Pay when it arrives" },
-                  { value: "razorpay", label: "Online Payment (Razorpay)", note: "UPI, cards, netbanking" },
                   { value: "upi", label: "UPI", note: "Instant bank transfer" },
-                  { value: "card", label: "Card", note: "Visa, Mastercard, Amex" },
-                  { value: "netbanking", label: "Net Banking", note: "All major banks" },
                 ].map((method) => (
                   <label
                     key={method.value}
@@ -500,10 +497,7 @@ const Checkout = () => {
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 <span className="rounded-full border px-2 py-1">UPI</span>
-                <span className="rounded-full border px-2 py-1">VISA</span>
-                <span className="rounded-full border px-2 py-1">Mastercard</span>
-                <span className="rounded-full border px-2 py-1">Rupay</span>
-                <span className="rounded-full border px-2 py-1">NetBanking</span>
+                <span className="rounded-full border px-2 py-1">Cash on Delivery</span>
               </div>
               {paymentMethod === "cod" && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">

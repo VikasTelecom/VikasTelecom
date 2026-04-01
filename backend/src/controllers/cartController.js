@@ -76,7 +76,7 @@ const updateItem = async (req, res) => {
 
   const qty = Number(quantity);
   if (qty <= 0) {
-    item.remove();
+    cart.items.pull(itemId);
   } else {
     item.quantity = qty;
   }
@@ -93,7 +93,7 @@ const removeItem = async (req, res) => {
   const item = cart.items.id(itemId);
   if (!item) return res.status(404).json({ message: "Item not found" });
 
-  item.remove();
+  cart.items.pull(itemId);
   await cart.save();
   return res.json({ cart });
 };
