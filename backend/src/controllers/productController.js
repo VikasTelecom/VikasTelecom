@@ -142,8 +142,9 @@ const listProducts = async (req, res) => {
     if (maxPrice) filter.price.$lte = Number(maxPrice);
   }
 
-  const pageNumber = Math.max(Number(page), 1);
-  const pageSize = Math.min(Number(limit), 100);
+  const pageNumber = Math.max(Number(page) || 1, 1);
+  const requestedLimit = Number(limit) || 12;
+  const pageSize = Math.max(1, Math.min(requestedLimit, 500));
 
   const sortOption = sort ? sort.replace(/:/g, " ") : "-createdAt";
 

@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Plus, Search, Pencil, Trash2, X, ImageIcon, Package, Tag, BarChart3, ListChecks } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, X, ImageIcon, Package, Tag, BarChart3, ListChecks, Copy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,7 @@ type VariantForm = {
 
 type AdminProductView = AdminProduct & {
   generalName?: string;
+  brand?: string;
   images?: string[];
   variants?: VariantForm[];
 };
@@ -203,6 +204,7 @@ export default function Products() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProductView | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(defaultForm);
   const [activeSection, setActiveSection] = useState(0);
 
@@ -223,6 +225,26 @@ export default function Products() {
     return (slug: string) => map.get(slug) || slug;
   }, [categories]);
 
+  const toAdminProductView = (product: any): AdminProductView => ({
+    id: product.id,
+    name: product.title,
+    generalName: (product as { generalName?: string }).generalName || "",
+    brand: product.brand,
+    image: product.image,
+    hoverImage: product.hoverImage,
+    images: product.images || [],
+    variants: (product.variants || []).map(mapVariantToForm),
+    category: product.category,
+    description: product.description || "",
+    price: product.price,
+    mrp: product.mrp,
+    discount: product.discount,
+    stock: product.stock || 0,
+    status: product.status || "active",
+    badge: product.badge,
+    specifications: product.specifications || [],
+  });
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -232,24 +254,7 @@ export default function Products() {
           api.adminListBrands(),
         ]);
 
-        const mapped = productData.items.map((product) => ({
-          id: product.id,
-          name: product.title,
-          generalName: (product as { generalName?: string }).generalName || "",
-          image: product.image,
-          hoverImage: product.hoverImage,
-          images: product.images || [],
-          variants: (product.variants || []).map(mapVariantToForm),
-          category: product.category,
-          description: product.description || "",
-          price: product.price,
-          mrp: product.mrp,
-          discount: product.discount,
-          stock: product.stock || 0,
-          status: product.status || "active",
-          badge: product.badge,
-          specifications: product.specifications || [],
-        })) as AdminProductView[];
+        const mapped = productData.items.map((product) => toAdminProductView(product));
 
         setProducts(mapped);
         setCategories(categoryData.map((c) => ({ id: c.id, name: c.title, slug: c.slug })));
@@ -406,46 +411,12 @@ export default function Products() {
     try {
       if (editingProduct) {
         const updated = await api.adminUpdateProduct(editingProduct.id, payload);
-        setProducts((prev) => prev.map((p) => p.id === editingProduct.id ? {
-          ...p,
-          name: updated.title,
-          generalName: (updated as { generalName?: string }).generalName || "",
-          image: updated.image,
-          hoverImage: updated.hoverImage,
-          images: updated.images || [],
-          variants: (updated.variants || []).map(mapVariantToForm),
-          category: updated.category,
-          description: updated.description || "",
-          price: updated.price,
-          mrp: updated.mrp,
-          discount: updated.discount,
-          stock: updated.stock || 0,
-          status: updated.status || "active",
-          badge: updated.badge,
-          specifications: updated.specifications || [],
-        } : p));
+        setProducts((prev) => prev.map((p) => p.id === editingProduct.id ? toAdminProductView(updated) : p));
         toast({ title: "Product updated successfully" });
         refreshCategories();
       } else {
         const created = await api.adminCreateProduct(payload);
-        const newProduct: AdminProductView = {
-          id: created.id,
-          name: created.title,
-          generalName: (created as { generalName?: string }).generalName || "",
-          image: created.image,
-          hoverImage: created.hoverImage,
-          images: created.images || [],
-          variants: (created.variants || []).map(mapVariantToForm),
-          category: created.category,
-          description: created.description || "",
-          price: created.price,
-          mrp: created.mrp,
-          discount: created.discount,
-          stock: created.stock || 0,
-          status: created.status || "active",
-          badge: created.badge,
-          specifications: created.specifications || [],
-        } as AdminProductView;
+        const newProduct: AdminProductView = toAdminProductView(created);
         setProducts((prev) => [newProduct, ...prev]);
         toast({ title: "Product added successfully" });
         refreshCategories();
@@ -470,6 +441,95 @@ export default function Products() {
         setDeleteDialogOpen(false);
         setDeletingId(null);
       }
+    }
+  };
+
+  const handleDuplicate = async (product: AdminProductView) => {
+    try {
+      setDuplicatingId(product.id);
+
+      const sourceSpecs = (product.specifications || [])
+        .filter((s) => s.feature.trim() && s.value.trim())
+        .map((s) => ({ feature: s.feature.trim(), value: s.value.trim() }));
+
+      const gallery = (product.images || [])
+        .map((entry) => entry.trim())
+        .filter((entry) => entry && entry !== product.image && entry !== product.hoverImage);
+
+      const mainImage = product.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop";
+      const allImages = [mainImage, product.hoverImage, ...gallery].filter(Boolean) as string[];
+
+      const duplicateVariants = (product.variants || [])
+        .filter((variant) => variant.sku.trim())
+        .map((variant) => {
+          const variantGallery = variant.gallery
+            ? variant.gallery.split(/\r?\n|,/).map((entry) => entry.trim()).filter(Boolean)
+            : [];
+
+          const variantMainImage = variant.image || mainImage;
+          const variantHoverImage = variant.hoverImage || product.hoverImage;
+          const variantAllImages = [variantMainImage, variantHoverImage, ...(variantGallery.length > 0 ? variantGallery : gallery)].filter(Boolean);
+
+          const variantPrice = variant.price ? Number(variant.price) : Number(product.price);
+          const variantMrp = variant.mrp ? Number(variant.mrp) : Number(product.mrp);
+          const variantDiscount = variantMrp > variantPrice
+            ? Math.round(((variantMrp - variantPrice) / variantMrp) * 100)
+            : 0;
+
+          const variantSpecs = variant.specifications && variant.specifications.length > 0
+            ? variant.specifications.filter((s) => s.feature.trim() && s.value.trim())
+            : sourceSpecs;
+
+          return {
+            sku: variant.sku,
+            name: variant.name || undefined,
+            image: variantMainImage,
+            hoverImage: variantHoverImage || undefined,
+            images: variantAllImages,
+            price: variantPrice,
+            mrp: variantMrp,
+            discount: variantDiscount || undefined,
+            stock: variant.stock ? Number(variant.stock) : Number(product.stock),
+            specifications: variantSpecs,
+            attributes: {
+              color: variant.color || undefined,
+              storage: variant.storage || undefined,
+              ram: variant.ram || undefined,
+              size: variant.size || undefined,
+            },
+          };
+        });
+
+      const duplicateTitle = `${product.name.trim()} (Copy)`;
+      const payload = {
+        title: duplicateTitle,
+        generalName: (product.generalName || "").trim(),
+        category: product.category,
+        brand: product.brand || undefined,
+        description: product.description,
+        image: mainImage,
+        hoverImage: product.hoverImage || undefined,
+        images: allImages,
+        price: Number(product.price),
+        mrp: Number(product.mrp),
+        discount: Number(product.discount) || (Number(product.mrp) > Number(product.price)
+          ? Math.round(((Number(product.mrp) - Number(product.price)) / Number(product.mrp)) * 100)
+          : 0),
+        stock: Number(product.stock),
+        status: product.status,
+        badge: product.badge || undefined,
+        specifications: sourceSpecs,
+        variants: duplicateVariants,
+      };
+
+      const created = await api.adminCreateProduct(payload);
+      setProducts((prev) => [toAdminProductView(created), ...prev]);
+      toast({ title: "Product duplicated successfully" });
+      refreshCategories();
+    } catch (error) {
+      toast({ title: "Failed to duplicate product", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setDuplicatingId(null);
     }
   };
 
@@ -622,6 +682,16 @@ export default function Products() {
                   </TableCell>
                   <TableCell className="text-right pr-4">
                     <div className="flex justify-end gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 hover:bg-emerald-50 hover:text-emerald-600"
+                        onClick={() => handleDuplicate(p)}
+                        disabled={duplicatingId === p.id}
+                        title="Duplicate product"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </Button>
                       <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600" onClick={() => openEdit(p)}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
