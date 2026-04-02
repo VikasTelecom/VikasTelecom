@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Plus, Search, Pencil, Trash2, X, ImageIcon, Package, Tag, BarChart3, ListChecks, Copy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -193,6 +193,7 @@ function getColorHex(color: string): string {
 }
 
 export default function Products() {
+  const PRODUCTS_PER_PAGE = 50;
   const { refreshCategories } = useCategories();
   const [products, setProducts] = useState<AdminProductView[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -200,6 +201,10 @@ export default function Products() {
   const [filteredBrands, setFilteredBrands] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProductView | null>(null);
@@ -213,12 +218,6 @@ export default function Products() {
     const disc = calcDiscount(form.price, form.mrp);
     if (disc) setForm((f) => ({ ...f, discount: disc }));
   }, [form.price, form.mrp]);
-
-  const filtered = products.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchCat = catFilter === "All" || p.category === catFilter;
-    return matchSearch && matchCat;
-  });
 
   const categoryLabel = useMemo(() => {
     const map = new Map(categories.map((c) => [c.slug, c.name]));
@@ -245,32 +244,62 @@ export default function Products() {
     specifications: product.specifications || [],
   });
 
+  const loadProducts = useCallback(async (pageToLoad: number, keyword: string, category: string) => {
+    try {
+      setIsLoadingProducts(true);
+      const productData = await api.adminListProducts({
+        page: pageToLoad,
+        limit: PRODUCTS_PER_PAGE,
+        sort: "-createdAt",
+        q: keyword.trim() || undefined,
+        category: category === "All" ? undefined : category,
+      });
+
+      const mapped = productData.items.map((product) => toAdminProductView(product));
+      setProducts(mapped);
+      setTotalProducts(productData.total || 0);
+      setTotalPages(Math.max(productData.pages || 1, 1));
+    } catch (error) {
+      toast({ title: "Failed to load products", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const load = async () => {
+    const loadMeta = async () => {
       try {
-        const [productData, categoryData, brandData] = await Promise.all([
-          api.adminListProducts({ limit: 200, sort: "-createdAt" }),
+        const [categoryData, brandData] = await Promise.all([
           api.adminListCategories(),
           api.adminListBrands(),
         ]);
 
-        const mapped = productData.items.map((product) => toAdminProductView(product));
-
-        setProducts(mapped);
         setCategories(categoryData.map((c) => ({ id: c.id, name: c.title, slug: c.slug })));
-        setBrands(brandData.map((b: any) => ({ 
-          id: b._id || b.id, 
-          name: b.name, 
+        setBrands(brandData.map((b: any) => ({
+          id: b._id || b.id,
+          name: b.name,
           slug: b.slug,
-          categories: b.categories || (b.category ? [b.category] : [])
+          categories: b.categories || (b.category ? [b.category] : []),
         })));
       } catch (error) {
         toast({ title: "Failed to load products", description: (error as Error).message, variant: "destructive" });
       }
     };
 
-    load();
+    loadMeta();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadProducts(currentPage, search, catFilter);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [currentPage, search, catFilter, loadProducts]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, catFilter]);
 
   // Filter brands based on selected category
   useEffect(() => {
@@ -413,11 +442,12 @@ export default function Products() {
         const updated = await api.adminUpdateProduct(editingProduct.id, payload);
         setProducts((prev) => prev.map((p) => p.id === editingProduct.id ? toAdminProductView(updated) : p));
         toast({ title: "Product updated successfully" });
+        loadProducts(currentPage, search, catFilter);
         refreshCategories();
       } else {
-        const created = await api.adminCreateProduct(payload);
-        const newProduct: AdminProductView = toAdminProductView(created);
-        setProducts((prev) => [newProduct, ...prev]);
+        await api.adminCreateProduct(payload);
+        setCurrentPage(1);
+        loadProducts(1, search, catFilter);
         toast({ title: "Product added successfully" });
         refreshCategories();
       }
@@ -431,7 +461,7 @@ export default function Products() {
     if (deletingId) {
       try {
         await api.adminDeleteProduct(deletingId);
-        setProducts((prev) => prev.filter((p) => p.id !== deletingId));
+        loadProducts(currentPage, search, catFilter);
         toast({ title: "Product deleted" });
         // Refresh categories in case product count changed
         refreshCategories();
@@ -522,8 +552,9 @@ export default function Products() {
         variants: duplicateVariants,
       };
 
-      const created = await api.adminCreateProduct(payload);
-      setProducts((prev) => [toAdminProductView(created), ...prev]);
+      await api.adminCreateProduct(payload);
+      setCurrentPage(1);
+      loadProducts(1, search, catFilter);
       toast({ title: "Product duplicated successfully" });
       refreshCategories();
     } catch (error) {
@@ -579,7 +610,7 @@ export default function Products() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Products</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{products.length} products listed</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{totalProducts} products listed</p>
         </div>
         <Button onClick={openAdd} className="gap-2 bg-orange-500 hover:bg-orange-600 text-white shadow-md">
           <Plus className="w-4 h-4" /> Add New Product
@@ -625,7 +656,7 @@ export default function Products() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((p) => (
+              {products.map((p) => (
                 <TableRow key={p.id} className="hover:bg-muted/20 transition-colors">
                   <TableCell className="pl-4">
                     <div className="flex items-center gap-3">
@@ -703,7 +734,7 @@ export default function Products() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && (
+              {!isLoadingProducts && products.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                     <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
@@ -711,8 +742,39 @@ export default function Products() {
                   </TableCell>
                 </TableRow>
               )}
+              {isLoadingProducts && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                    <p className="text-sm">Loading products...</p>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
+          <div className="px-4 py-3 border-t flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              Showing {products.length === 0 ? 0 : (currentPage - 1) * PRODUCTS_PER_PAGE + 1} to {Math.min(currentPage * PRODUCTS_PER_PAGE, totalProducts)} of {totalProducts}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1 || isLoadingProducts}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">Page {currentPage} of {Math.max(totalPages, 1)}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages || isLoadingProducts}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
