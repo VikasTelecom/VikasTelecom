@@ -157,12 +157,21 @@ export default function Categories() {
                         <div className="relative h-36 bg-muted overflow-hidden">
                             <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                            <div className="absolute top-2 right-2 flex gap-1">
-                                <Button size="icon" variant="secondary" className="h-7 w-7 bg-white/90 hover:bg-white" onClick={() => openEdit(cat)}>
+                            <div className="absolute top-2 right-2 z-10 flex gap-1.5">
+                                <Button
+                                    size="icon"
+                                    variant="secondary"
+                                    className="h-8 w-8 bg-black/75 text-white border border-white/50 shadow-md hover:bg-black"
+                                    onClick={() => openEdit(cat)}
+                                >
                                     <Pencil className="w-3.5 h-3.5" />
                                 </Button>
-                                <Button size="icon" variant="secondary" className="h-7 w-7 bg-white/90 hover:bg-red-100 hover:text-red-600"
-                                    onClick={() => { setDeletingId(cat.id); setDeleteDialogOpen(true); }}>
+                                <Button
+                                    size="icon"
+                                    variant="secondary"
+                                    className="h-8 w-8 bg-black/75 text-white border border-white/50 shadow-md hover:bg-red-600 hover:text-white"
+                                    onClick={() => { setDeletingId(cat.id); setDeleteDialogOpen(true); }}
+                                >
                                     <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
                             </div>
