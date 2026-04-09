@@ -220,6 +220,13 @@ export const api = {
       skipAuth: true,
     });
   },
+  loginWithGoogle: async (credential: string) => {
+    return apiRequest<{ user: ApiUser; token: string }>("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+      skipAuth: true,
+    });
+  },
   register: async (name: string, email: string, password: string, phone?: string) => {
     return apiRequest<{ user: ApiUser; token: string }>("/auth/register", {
       method: "POST",

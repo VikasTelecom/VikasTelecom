@@ -15,6 +15,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<User>;
+  loginWithGoogle: (credential: string) => Promise<User>;
   signup: (name: string, email: string, phone: string, password: string) => Promise<User>;
   updateProfile: (payload: { name?: string; phone?: string }) => Promise<User>;
   logout: () => void;
@@ -54,6 +55,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return u;
   };
 
+  const loginWithGoogle = async (credential: string) => {
+    const data = await api.loginWithGoogle(credential);
+    const u: User = data.user as User;
+    setUser(u);
+    localStorage.setItem("auth_user", JSON.stringify(u));
+    localStorage.setItem("auth_token", data.token);
+    toast({ title: u.role === "admin" ? "Welcome, Admin!" : "Welcome!", description: "Signed in with Google successfully." });
+    return u;
+  };
+
   const signup = async (name: string, email: string, phone: string, password: string) => {
     const data = await api.register(name, email, password, phone);
     const u: User = data.user as User;
@@ -80,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, updateProfile, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, loginWithGoogle, signup, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );
