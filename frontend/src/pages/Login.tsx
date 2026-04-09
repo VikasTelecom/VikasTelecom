@@ -62,7 +62,7 @@ const Login = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-[400px] bg-card rounded-xl shadow-card-hover p-8"
+        className="w-full max-w-[450px] bg-card rounded-xl shadow-card-hover p-6"
       >
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-foreground">Login to Your Account</h1>
@@ -115,12 +115,12 @@ const Login = () => {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Checkbox
+              {/* <Checkbox
                 id="remember"
                 checked={remember}
                 onCheckedChange={(v) => setRemember(v as boolean)}
-              />
-              <Label htmlFor="remember" className="text-sm cursor-pointer">Remember me</Label>
+              /> */}
+              {/* <Label htmlFor="remember" className="text-sm cursor-pointer">Remember me</Label> */}
             </div>
             <Link to="/forgot-password" className="text-sm text-primary hover:text-primary-hover transition-colors">
               Forgot password?
@@ -132,16 +132,16 @@ const Login = () => {
           </Button>
         </form>
 
-        <div className="relative my-6">
+        {/* <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs">
             <span className="bg-card px-3 text-muted-foreground">OR</span>
           </div>
-        </div>
+        </div> */}
 
-        <div className="w-full flex justify-center">
+        {/* <div className="w-full flex justify-center">
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => setErrors({ email: "Google login failed. Please try again." })}
@@ -149,7 +149,7 @@ const Login = () => {
             shape="pill"
             width="320"
           />
-        </div>
+        </div> */}
 
         <p className="text-center text-sm text-muted-foreground mt-4">
           Don't have an account?{" "}

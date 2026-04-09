@@ -24,7 +24,7 @@ export const CategoryGrid = () => {
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Shop by Category</h2>
           <p className="text-muted-foreground">Find the perfect gadget for your needs</p>
         </div>
-        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(96px,30vw)] overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-3 lg:grid-cols-8 md:gap-4 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
+        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(88px,24vw)] overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-4 lg:grid-cols-10 md:gap-3 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
           {items.map((cat, i) => (
             <MotionLink
               key={cat.id}
@@ -33,23 +33,23 @@ export const CategoryGrid = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.05 }}
-              className="snap-start group relative aspect-square rounded-2xl overflow-hidden bg-muted"
+              className="snap-start group block rounded-2xl bg-muted overflow-hidden"
             >
-              <img
-                src={cat.image}
-                alt={cat.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                loading={i < 4 ? "eager" : "lazy"}
-                fetchPriority={i < 4 ? "high" : "auto"}
-                decoding="async"
-                onError={(event) => {
-                  event.currentTarget.src = FALLBACK_CATEGORY_IMAGE;
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <h3 className="font-semibold text-background text-sm sm:text-base">{cat.title}</h3>
-                <p className="text-background/70 text-xs">{cat.productCount} Products</p>
+              <div className="relative aspect-square overflow-hidden bg-muted">
+                <img
+                  src={cat.image}
+                  alt={cat.title}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading={i < 4 ? "eager" : "lazy"}
+                  fetchPriority={i < 4 ? "high" : "auto"}
+                  decoding="async"
+                  onError={(event) => {
+                    event.currentTarget.src = FALLBACK_CATEGORY_IMAGE;
+                  }}
+                />
+              </div>
+              <div className="px-2 py-2.5 text-center bg-muted">
+                <h3 className="font-semibold text-foreground text-sm leading-tight">{cat.title}</h3>
               </div>
             </MotionLink>
           ))}
@@ -67,7 +67,7 @@ const CategoryGridSkeleton = () => {
           <Skeleton className="mx-auto mb-3 h-8 w-56" />
           <Skeleton className="mx-auto h-4 w-72" />
         </div>
-        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(96px,30vw)] overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-3 lg:grid-cols-8 md:gap-4 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
+        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(88px,24vw)] overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-4 lg:grid-cols-10 md:gap-3 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}

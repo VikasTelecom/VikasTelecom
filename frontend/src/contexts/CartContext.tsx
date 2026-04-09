@@ -95,13 +95,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeFromCart = useCallback((lineId: string) => {
     if (isAuthenticated) {
-      // If authenticating, we expect lineId to be the _id from the database
-      // But just in case, let's find the item by id OR lineId
       const item = items.find((entry) => entry.id === lineId || entry.lineId === lineId);
-      if (!item?.id) return;
+      if (!item) return;
+
+      if (!item.id) {
+        setItems((prev) => prev.filter((entry) => entry.lineId !== item.lineId));
+        return;
+      }
+
       api.removeCartItem(item.id)
         .then(mapServerCart)
-        .catch(() => {});
+        .catch(() => {
+          setItems((prev) => prev.filter((entry) => entry.lineId !== item.lineId));
+        });
       return;
     }
     setItems((prev) => prev.filter((item) => item.lineId !== lineId));
@@ -109,15 +115,32 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateQuantity = useCallback((lineId: string, quantity: number) => {
     if (isAuthenticated) {
-      if (quantity <= 0) {
-          removeFromCart(lineId);
-          return;
-      }
       const item = items.find((entry) => entry.id === lineId || entry.lineId === lineId);
-      if (!item?.id) return;
+      if (!item) return;
+
+      if (quantity <= 0) {
+        removeFromCart(item.id ?? item.lineId);
+        return;
+      }
+
+      if (!item.id) {
+        setItems((prev) =>
+          prev.map((entry) =>
+            entry.lineId === item.lineId ? { ...entry, quantity } : entry
+          )
+        );
+        return;
+      }
+
       api.updateCartItem(item.id, quantity)
         .then(mapServerCart)
-        .catch(() => {});
+        .catch(() => {
+          setItems((prev) =>
+            prev.map((entry) =>
+              entry.lineId === item.lineId ? { ...entry, quantity } : entry
+            )
+          );
+        });
       return;
     }
 
