@@ -49,7 +49,7 @@ export const CategoryGrid = () => {
                 />
               </div>
               <div className="px-2 py-2.5 text-center bg-muted">
-                <h3 className="font-semibold text-foreground text-sm leading-tight">{cat.title}</h3>
+                <h3 className="font-normal sm:font-semibold text-foreground text-[11px] sm:text-xs leading-tight">{cat.title}</h3>
               </div>
             </MotionLink>
           ))}
