@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingCart } from "lucide-react";
+import { MessageCircle, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { openProductWhatsApp } from "@/lib/whatsapp";
 
 const FALLBACK_PRODUCT_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" rx="32" fill="#f4f4f5"/><rect x="56" y="56" width="288" height="288" rx="28" fill="#e4e4e7"/><path d="M104 274l66-76 44 48 30-28 56 56H104z" fill="#c4c4c8"/><circle cx="144" cy="154" r="24" fill="#d4d4d8"/></svg>'
@@ -87,20 +88,36 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             transition={{ duration: 0.15, ease: "easeOut" }}
             className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent"
           >
-            <motion.button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                addToCart(product);
-              }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.08 }}
-              className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              Add to Cart
-            </motion.button>
+            <div className="grid grid-cols-2 gap-2">
+              <motion.button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addToCart(product);
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.08 }}
+                className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Add to Cart
+              </motion.button>
+              <motion.button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openProductWhatsApp(product.title);
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.08 }}
+                className="w-full py-2.5 bg-[#25D366] text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:brightness-95 transition-colors duration-100 shadow-lg"
+              >
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp
+              </motion.button>
+            </div>
           </motion.div>
         )}
       </Link>
@@ -133,14 +150,24 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
 
         {/* Mobile Add to Cart (pinned to card bottom) */}
         {isMobile && (
-          <button
-            type="button"
-            onClick={() => addToCart(product)}
-            className="mt-3 w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            Add to Cart
-          </button>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => addToCart(product)}
+              className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Add to Cart
+            </button>
+            <button
+              type="button"
+              onClick={() => openProductWhatsApp(product.title)}
+              className="w-full py-2.5 bg-[#25D366] text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4" />
+              WhatsApp
+            </button>
+          </div>
         )}
       </div>
     </motion.div>

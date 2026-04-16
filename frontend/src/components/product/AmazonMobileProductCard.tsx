@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
+import { MessageCircle } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/data/products";
+import { openProductWhatsApp } from "@/lib/whatsapp";
 
 const FALLBACK_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" rx="24" fill="#f4f4f5"/><rect x="56" y="56" width="288" height="288" rx="22" fill="#e4e4e7"/><path d="M104 274l66-76 44 48 30-28 56 56H104z" fill="#c4c4c8"/><circle cx="144" cy="154" r="24" fill="#d4d4d8"/></svg>'
@@ -75,13 +77,21 @@ export function AmazonMobileProductCard({
         </div>
       </Link>
 
-      <div className="px-3 pb-3">
+      <div className="px-3 pb-3 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => addToCart(product)}
           className="w-full rounded-full py-2.5 text-[14px] font-bold text-black bg-[hsl(var(--cta-yellow))] hover:bg-[hsl(var(--cta-yellow-hover))] transition-colors"
         >
           Add to Cart
+        </button>
+        <button
+          type="button"
+          onClick={() => openProductWhatsApp(product.title)}
+          className="w-full rounded-full py-2.5 text-[14px] font-bold text-white bg-[#25D366] hover:brightness-95 transition-colors flex items-center justify-center gap-1.5"
+        >
+          <MessageCircle className="w-4 h-4" />
+          WhatsApp
         </button>
       </div>
     </div>
