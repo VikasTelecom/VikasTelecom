@@ -75,7 +75,7 @@ const Checkout = () => {
       .catch(() => {
         setShowAddressForm(true);
       });
-                  "Customer Support 9 AM - 10 PM (Open Sunday)",
+  }, [isAuthenticated]);
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const shipping = useMemo(() => (subtotal >= 999 ? 0 : 49), [subtotal]);
