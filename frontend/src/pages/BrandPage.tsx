@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { ProductCard } from "@/components/product/ProductCard";
+import { AmazonMobileProductCard } from "@/components/product/AmazonMobileProductCard";
 import {
   Select,
   SelectContent,
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { Product } from "@/data/products";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Brand {
   id?: string;
@@ -34,6 +36,7 @@ const BrandPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const loadBrandAndProducts = async () => {
@@ -211,7 +214,11 @@ const BrandPage = () => {
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5"
             >
               {filteredProducts.map((product, index) => (
-                <ProductCard key={product.id} product={product} index={index} />
+                isMobile ? (
+                  <AmazonMobileProductCard key={product.id} product={product} />
+                ) : (
+                  <ProductCard key={product.id} product={product} index={index} />
+                )
               ))}
             </motion.div>
           )}
