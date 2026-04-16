@@ -135,8 +135,29 @@ const normalizeAssetUrl = (value?: string | null) => {
   const trimmed = value.trim();
   if (!trimmed) return "";
 
-  if (/^(data:|blob:|https?:\/\/)/i.test(trimmed)) {
+  if (/^(data:|blob:)/i.test(trimmed)) {
     return trimmed;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed);
+      const isHttpsPage = typeof window !== "undefined" && window.location.protocol === "https:";
+      const isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(url.hostname);
+
+      // Avoid mixed-content image blocking on production HTTPS pages.
+      if (isHttpsPage && url.protocol === "http:" && !isLocalHost) {
+        url.protocol = "https:";
+        return url.toString();
+      }
+      return url.toString();
+    } catch {
+      return trimmed;
+    }
+  }
+
+  if (/^www\./i.test(trimmed)) {
+    return `https://${trimmed}`;
   }
 
   const cleaned = trimmed.replace(/\\/g, "/");

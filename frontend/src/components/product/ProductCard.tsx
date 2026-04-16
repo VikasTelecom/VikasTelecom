@@ -31,6 +31,8 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     ? product.hoverImage || product.images?.[1] || FALLBACK_PRODUCT_IMAGE
     : product.image || product.images?.[0] || FALLBACK_PRODUCT_IMAGE;
 
+  const hasAlternateImage = Boolean(product.hoverImage || product.images?.[1]);
+
   const showQuickAdd = !isMobile && isHovered;
 
   return (
@@ -53,7 +55,14 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           loading={index < 4 ? "eager" : "lazy"}
           fetchPriority={index < 4 ? "high" : "auto"}
           decoding="async"
-          onError={() => setHasImageError(true)}
+          onError={() => {
+            // If hover image fails on desktop, retry with primary image before showing placeholder.
+            if (isHovered && hasAlternateImage) {
+              setIsHovered(false);
+              return;
+            }
+            setHasImageError(true);
+          }}
         />
         {product.badge && (
           <motion.span
