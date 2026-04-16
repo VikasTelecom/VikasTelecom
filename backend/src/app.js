@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const { Readable } = require("stream");
 
 const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -22,6 +23,61 @@ app.use(morgan("dev"));
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+const IMAGE_PROXY_ALLOWED_HOSTS = new Set(["evmzone.com", "www.evmzone.com"]);
+
+app.get("/api/image-proxy", async (req, res) => {
+  const rawUrl = String(req.query.url || "").trim();
+  if (!rawUrl) {
+    return res.status(400).json({ message: "Image URL is required" });
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(rawUrl);
+  } catch {
+    return res.status(400).json({ message: "Invalid image URL" });
+  }
+
+  if (!/^https?:$/i.test(parsedUrl.protocol)) {
+    return res.status(400).json({ message: "Only http/https image URLs are supported" });
+  }
+
+  if (!IMAGE_PROXY_ALLOWED_HOSTS.has(parsedUrl.hostname.toLowerCase())) {
+    return res.status(403).json({ message: "Host is not allowed for image proxy" });
+  }
+
+  try {
+    const upstream = await fetch(parsedUrl.toString(), {
+      headers: {
+        Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0",
+      },
+    });
+
+    if (!upstream.ok || !upstream.body) {
+      return res.status(502).json({ message: "Failed to fetch image" });
+    }
+
+    const contentType = upstream.headers.get("content-type") || "application/octet-stream";
+    if (!contentType.toLowerCase().startsWith("image/")) {
+      return res.status(502).json({ message: "Upstream response is not an image" });
+    }
+
+    const cacheControl = upstream.headers.get("cache-control") || "public, max-age=86400";
+    const contentLength = upstream.headers.get("content-length");
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", cacheControl);
+    if (contentLength) {
+      res.setHeader("Content-Length", contentLength);
+    }
+
+    Readable.fromWeb(upstream.body).pipe(res);
+  } catch (error) {
+    return res.status(502).json({ message: "Unable to proxy image" });
+  }
 });
 
 app.use("/api/auth", authRoutes);

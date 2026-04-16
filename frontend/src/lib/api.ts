@@ -129,6 +129,13 @@ const API_ORIGIN = (() => {
   }
 })();
 
+const EVM_IMAGE_HOSTS = new Set(["evmzone.com", "www.evmzone.com"]);
+
+const buildImageProxyUrl = (absoluteUrl: string) => {
+  if (!API_BASE_URL) return absoluteUrl;
+  return `${API_BASE_URL}/image-proxy?url=${encodeURIComponent(absoluteUrl)}`;
+};
+
 const normalizeAssetUrl = (value?: string | null) => {
   if (!value) return "";
 
@@ -148,9 +155,14 @@ const normalizeAssetUrl = (value?: string | null) => {
       // Avoid mixed-content image blocking on production HTTPS pages.
       if (isHttpsPage && url.protocol === "http:" && !isLocalHost) {
         url.protocol = "https:";
-        return url.toString();
       }
-      return url.toString();
+
+      const normalizedAbsoluteUrl = url.toString();
+      if (EVM_IMAGE_HOSTS.has(url.hostname.toLowerCase())) {
+        return buildImageProxyUrl(normalizedAbsoluteUrl);
+      }
+
+      return normalizedAbsoluteUrl;
     } catch {
       return trimmed;
     }
