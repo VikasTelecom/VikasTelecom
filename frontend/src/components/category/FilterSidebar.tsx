@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, RotateCcw, X, Star } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { connectivityTypes } from "@/data/audioProducts";
 
 export interface Filters {
   priceRange: [number, number];
@@ -70,18 +69,33 @@ export const FilterSidebar = ({
   isMobile,
   onClose,
 }: FilterSidebarProps) => {
+  const applyCustomPrice = (type: "min" | "max", value: string) => {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) return;
+
+    const safeValue = Math.max(0, Math.min(maxPrice, Math.round(parsed)));
+    let [min, max] = filters.priceRange;
+
+    if (type === "min") {
+      min = safeValue;
+      if (min > max) {
+        max = min;
+      }
+    } else {
+      max = safeValue;
+      if (max < min) {
+        min = max;
+      }
+    }
+
+    onChange({ ...filters, priceRange: [min, max] });
+  };
+
   const toggleBrand = (brand: string) => {
     const brands = filters.brands.includes(brand)
       ? filters.brands.filter((b) => b !== brand)
       : [...filters.brands, brand];
     onChange({ ...filters, brands });
-  };
-
-  const toggleConnectivity = (type: string) => {
-    const connectivity = filters.connectivity.includes(type)
-      ? filters.connectivity.filter((c) => c !== type)
-      : [...filters.connectivity, type];
-    onChange({ ...filters, connectivity });
   };
 
   const content = (
@@ -112,6 +126,26 @@ export const FilterSidebar = ({
             <span>₹{filters.priceRange[0].toLocaleString()}</span>
             <span>₹{filters.priceRange[1].toLocaleString()}</span>
           </div>
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <input
+              type="number"
+              min={0}
+              max={maxPrice}
+              value={filters.priceRange[0]}
+              onChange={(event) => applyCustomPrice("min", event.target.value)}
+              className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground"
+              aria-label="Minimum price"
+            />
+            <input
+              type="number"
+              min={0}
+              max={maxPrice}
+              value={filters.priceRange[1]}
+              onChange={(event) => applyCustomPrice("max", event.target.value)}
+              className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground"
+              aria-label="Maximum price"
+            />
+          </div>
         </div>
       </FilterGroup>
 
@@ -133,22 +167,6 @@ export const FilterSidebar = ({
             </label>
           ))
         )}
-      </FilterGroup>
-
-      {/* Connectivity */}
-      <FilterGroup title="Connectivity">
-        {connectivityTypes.map((type) => (
-          <label
-            key={type}
-            className="flex items-center gap-2 cursor-pointer text-sm text-foreground"
-          >
-            <Checkbox
-              checked={filters.connectivity.includes(type)}
-              onCheckedChange={() => toggleConnectivity(type)}
-            />
-            {type}
-          </label>
-        ))}
       </FilterGroup>
 
       {/* Rating */}

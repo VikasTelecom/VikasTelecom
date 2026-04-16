@@ -6,10 +6,15 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { ProductCard } from "@/components/product/ProductCard";
-import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { Product } from "@/data/products";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Brand {
   id?: string;
@@ -29,7 +34,6 @@ const BrandPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     const loadBrandAndProducts = async () => {
@@ -71,19 +75,15 @@ const BrandPage = () => {
     }
   }, [selectedCategory, products]);
 
-  // If the category filter UI is hidden (mobile), ensure we don't get stuck in a filtered state.
-  useEffect(() => {
-    if (isMobile && selectedCategory !== "all") {
-      setSelectedCategory("all");
-    }
-  }, [isMobile, selectedCategory]);
+  const getCategoryCount = (category: string) =>
+    products.filter((p) => p.category === category).length;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <CartDrawer />
 
-      <main className="pt-20">
+      <main className="pt-16 lg:pt-20">
         {/* Brand Banner */}
         {brand?.logo && (
           <motion.div
@@ -127,44 +127,62 @@ const BrandPage = () => {
           </nav>
         </div>
 
-        {/* Category Filter */}
-        {availableCategories.length > 0 && (
-          <div className="container-main mb-6 hidden md:block">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 flex-wrap p-4 bg-muted/30 rounded-lg border border-border"
-            >
-              <Filter className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">Categories:</span>
-              <Button
-                variant={selectedCategory === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory("all")}
-                className="rounded-full"
-              >
-                All ({products.length})
-              </Button>
-              {availableCategories.map((category) => {
-                const count = products.filter((p) => p.category === category).length;
-                return (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className="rounded-full capitalize"
-                  >
-                    {category.replace(/-/g, " ")} ({count})
-                  </Button>
-                );
-              })}
-            </motion.div>
-          </div>
-        )}
-
         {/* Products Grid */}
         <div className="container-main pb-16">
+          {availableCategories.length > 0 && !loading && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 md:hidden"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-semibold text-foreground">Categories</span>
+              </div>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All ({products.length})</SelectItem>
+                  {availableCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category.replace(/-/g, " ")} ({getCategoryCount(category)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </motion.div>
+          )}
+
+          {availableCategories.length > 0 && !loading && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 hidden md:block"
+            >
+              <div className="bg-card rounded-2xl border border-border/50 p-4 shadow-card">
+                <div className="flex items-center gap-2 mb-3">
+                  <Filter className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-semibold text-foreground">Categories</span>
+                </div>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-full md:max-w-sm">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All ({products.length})</SelectItem>
+                    {availableCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category.replace(/-/g, " ")} ({getCategoryCount(category)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </motion.div>
+          )}
+
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <p className="text-muted-foreground">Loading products...</p>

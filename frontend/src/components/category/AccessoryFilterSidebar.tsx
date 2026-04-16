@@ -50,6 +50,30 @@ const FilterGroup = ({
 };
 
 export const AccessoryFilterSidebar = ({ filters, onChange, onReset, brands, isMobile, onClose }: AccessoryFilterSidebarProps) => {
+  const maxPrice = 5000;
+
+  const applyCustomPrice = (type: "min" | "max", value: string) => {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) return;
+
+    const safeValue = Math.max(0, Math.min(maxPrice, Math.round(parsed)));
+    let [min, max] = filters.priceRange;
+
+    if (type === "min") {
+      min = safeValue;
+      if (min > max) {
+        max = min;
+      }
+    } else {
+      max = safeValue;
+      if (max < min) {
+        min = max;
+      }
+    }
+
+    onChange({ ...filters, priceRange: [min, max] });
+  };
+
   const toggleArray = (arr: string[], val: string) =>
     arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
 
@@ -64,11 +88,31 @@ export const AccessoryFilterSidebar = ({ filters, onChange, onReset, brands, isM
 
       <FilterGroup title="Price Range">
         <div className="px-1">
-          <Slider min={0} max={5000} step={100} value={[filters.priceRange[0], filters.priceRange[1]]}
+          <Slider min={0} max={maxPrice} step={100} value={[filters.priceRange[0], filters.priceRange[1]]}
             onValueChange={(val) => onChange({ ...filters, priceRange: [val[0], val[1]] })} className="mb-3" />
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>₹{filters.priceRange[0].toLocaleString()}</span>
             <span>₹{filters.priceRange[1].toLocaleString()}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <input
+              type="number"
+              min={0}
+              max={maxPrice}
+              value={filters.priceRange[0]}
+              onChange={(event) => applyCustomPrice("min", event.target.value)}
+              className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground"
+              aria-label="Minimum price"
+            />
+            <input
+              type="number"
+              min={0}
+              max={maxPrice}
+              value={filters.priceRange[1]}
+              onChange={(event) => applyCustomPrice("max", event.target.value)}
+              className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground"
+              aria-label="Maximum price"
+            />
           </div>
         </div>
       </FilterGroup>

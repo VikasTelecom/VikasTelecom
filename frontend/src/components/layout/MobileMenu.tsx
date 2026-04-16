@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ChevronRight, Loader2, User, Package, LogOut } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronUp, Loader2, User, Package, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useCategories } from "@/contexts/CategoriesContext";
@@ -25,6 +25,8 @@ export const MobileMenu = ({ onClose }: MobileMenuProps) => {
   const categories = allCategories.filter((cat) => cat.status !== "inactive");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [brandsLoading, setBrandsLoading] = useState(true);
+  const [brandsOpen, setBrandsOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   const handleScrollToFooter = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -163,60 +165,92 @@ export const MobileMenu = ({ onClose }: MobileMenuProps) => {
           </nav>
 
           <div className="mt-6 pt-6 border-t border-border">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Categories</h3>
-              {loading && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
-            </div>
-            {categories.length === 0 && !loading ? (
-              <p className="text-sm text-muted-foreground">No categories available</p>
-            ) : (
-              categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  to={`/categories/${cat.slug}`}
-                  onClick={onClose}
-                  className="flex items-center justify-between py-3 px-2 hover:bg-accent rounded-lg transition-colors mb-2"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-sm text-foreground">{cat.title}</h4>
-                    {cat.productCount !== undefined && (
-                      <span className="text-xs text-muted-foreground">
-                        {cat.productCount} product{cat.productCount !== 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </Link>
-              ))
+            <button
+              type="button"
+              onClick={() => setBrandsOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between mb-3"
+            >
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Brands</h3>
+              <div className="flex items-center gap-2">
+                {brandsLoading && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+                {brandsOpen ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
+            </button>
+
+            {brandsOpen && (
+              <>
+                {brands.length === 0 && !brandsLoading ? (
+                  <p className="text-sm text-muted-foreground">No brands available</p>
+                ) : (
+                  brands.map((brand) => (
+                    <Link
+                      key={brand.id || brand._id}
+                      to={`/brands/${brand.slug}`}
+                      onClick={onClose}
+                      className="flex items-center justify-between py-3 px-2 hover:bg-accent rounded-lg transition-colors mb-2"
+                    >
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm text-foreground">{brand.name}</h4>
+                        {brand.productCount !== undefined && (
+                          <span className="text-xs text-muted-foreground">
+                            {brand.productCount} product{brand.productCount !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </Link>
+                  ))
+                )}
+              </>
             )}
           </div>
 
           <div className="mt-6 pt-6 border-t border-border">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Brands</h3>
-              {brandsLoading && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
-            </div>
-            {brands.length === 0 && !brandsLoading ? (
-              <p className="text-sm text-muted-foreground">No brands available</p>
-            ) : (
-              brands.map((brand) => (
-                <Link
-                  key={brand.id || brand._id}
-                  to={`/brands/${brand.slug}`}
-                  onClick={onClose}
-                  className="flex items-center justify-between py-3 px-2 hover:bg-accent rounded-lg transition-colors mb-2"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-sm text-foreground">{brand.name}</h4>
-                    {brand.productCount !== undefined && (
-                      <span className="text-xs text-muted-foreground">
-                        {brand.productCount} product{brand.productCount !== 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </Link>
-              ))
+            <button
+              type="button"
+              onClick={() => setCategoriesOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between mb-3"
+            >
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Categories</h3>
+              <div className="flex items-center gap-2">
+                {loading && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+                {categoriesOpen ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
+            </button>
+
+            {categoriesOpen && (
+              <>
+                {categories.length === 0 && !loading ? (
+                  <p className="text-sm text-muted-foreground">No categories available</p>
+                ) : (
+                  categories.map((cat) => (
+                    <Link
+                      key={cat.id}
+                      to={`/categories/${cat.slug}`}
+                      onClick={onClose}
+                      className="flex items-center justify-between py-3 px-2 hover:bg-accent rounded-lg transition-colors mb-2"
+                    >
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm text-foreground">{cat.title}</h4>
+                        {cat.productCount !== undefined && (
+                          <span className="text-xs text-muted-foreground">
+                            {cat.productCount} product{cat.productCount !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </Link>
+                  ))
+                )}
+              </>
             )}
           </div>
         </div>
