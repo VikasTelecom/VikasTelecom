@@ -24,7 +24,7 @@ export const CategoryGrid = () => {
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Shop by Category</h2>
           <p className="text-muted-foreground">Find the perfect gadget for your needs</p>
         </div>
-        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(88px,24vw)] overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-4 lg:grid-cols-10 md:gap-3 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
+        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(76px,20vw)] overflow-x-auto pb-6 gap-2 -mx-4 px-3 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-4 lg:grid-cols-10 md:gap-3 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
           {items.map((cat, i) => (
             <MotionLink
               key={cat.id}
@@ -67,7 +67,7 @@ const CategoryGridSkeleton = () => {
           <Skeleton className="mx-auto mb-3 h-8 w-56" />
           <Skeleton className="mx-auto h-4 w-72" />
         </div>
-        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(88px,24vw)] overflow-x-auto pb-6 gap-3 -mx-4 px-4 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-4 lg:grid-cols-10 md:gap-3 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
+        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(76px,20vw)] overflow-x-auto pb-6 gap-2 -mx-4 px-3 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-4 lg:grid-cols-10 md:gap-3 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
@@ -76,7 +76,7 @@ const CategoryGridSkeleton = () => {
               <Skeleton className="h-full w-full rounded-none" />
             </div>
           ))}
-        </div>
+          </div>
       </div>
     </section>
   );

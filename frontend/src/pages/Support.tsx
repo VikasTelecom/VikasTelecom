@@ -133,27 +133,17 @@ const Support = () => {
                     <Clock className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                     <div>
                       <p className="font-semibold text-foreground mb-2">
-                        Monday - Friday
+                        Monday - Sunday
                       </p>
-                      <p className="text-muted-foreground">9:00 AM - 6:00 PM IST</p>
+                      <p className="text-muted-foreground">9:00 AM - 10:00 PM IST</p>
                     </div>
                   </motion.div>
 
                   <motion.div variants={item} className="flex items-start gap-4">
                     <Clock className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                     <div>
-                      <p className="font-semibold text-foreground mb-2">
-                        Saturday
-                      </p>
-                      <p className="text-muted-foreground">10:00 AM - 4:00 PM IST</p>
-                    </div>
-                  </motion.div>
-
-                  <motion.div variants={item} className="flex items-start gap-4">
-                    <Clock className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="font-semibold text-foreground mb-2">Sunday</p>
-                      <p className="text-muted-foreground">Closed</p>
+                      <p className="font-semibold text-foreground mb-2">Customer Support</p>
+                      <p className="text-muted-foreground">Open on Sunday</p>
                     </div>
                   </motion.div>
                 </motion.div>

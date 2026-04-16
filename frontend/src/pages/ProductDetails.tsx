@@ -5,12 +5,9 @@ import {
   Star,
   ShoppingCart,
   Zap,
-  Truck,
-  RotateCcw,
   Minus,
   Plus,
   ChevronRight,
-  ShieldCheck,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -597,42 +594,6 @@ const ProductDetails = () => {
                   </div>
                 </div>
 
-                {/* Delivery + Return */}
-                <div className="space-y-4 p-5 rounded-xl bg-muted/50 border border-border">
-                  <div className="flex items-start gap-3">
-                    <Truck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Delivery
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {product.deliveryInfo}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <RotateCcw className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Returns
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {product.returnPolicy}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Warranty
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        1 Year Manufacturer Warranty
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

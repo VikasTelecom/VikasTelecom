@@ -8,6 +8,10 @@ interface ImageGalleryProps {
   title: string;
 }
 
+const FALLBACK_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><rect width="800" height="800" fill="#f4f4f5"/><rect x="140" y="180" width="520" height="400" rx="28" fill="#e4e4e7"/><path d="M220 520l120-130 90 100 70-70 80 100H220z" fill="#c4c4c8"/><circle cx="320" cy="300" r="38" fill="#d4d4d8"/></svg>'
+)}`;
+
 export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -42,6 +46,9 @@ export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               loading="lazy"
+              onError={(event) => {
+                event.currentTarget.src = FALLBACK_IMAGE;
+              }}
             />
           </AnimatePresence>
           <button
@@ -93,6 +100,9 @@ export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
               alt={`${title} thumbnail ${i + 1}`}
               className="w-full h-full object-cover"
               loading="lazy"
+              onError={(event) => {
+                event.currentTarget.src = FALLBACK_IMAGE;
+              }}
             />
           </button>
         ))}
@@ -126,6 +136,9 @@ export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             loading="lazy"
+            onError={(event) => {
+              event.currentTarget.src = FALLBACK_IMAGE;
+            }}
           />
         </AnimatePresence>
         <div className="absolute top-1.5 right-1.5 bg-background/80 backdrop-blur-sm rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">

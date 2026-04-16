@@ -121,6 +121,41 @@ type Paginated<T> = {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://vikastelecom.onrender.com/api";
 
+const API_ORIGIN = (() => {
+  try {
+    return new URL(API_BASE_URL).origin;
+  } catch {
+    return "";
+  }
+})();
+
+const normalizeAssetUrl = (value?: string | null) => {
+  if (!value) return "";
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  if (/^(data:|blob:|https?:\/\/)/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const cleaned = trimmed.replace(/\\/g, "/");
+
+  if (cleaned.startsWith("//")) {
+    return `https:${cleaned}`;
+  }
+
+  if (!API_ORIGIN) {
+    return cleaned;
+  }
+
+  if (cleaned.startsWith("/")) {
+    return `${API_ORIGIN}${cleaned}`;
+  }
+
+  return `${API_ORIGIN}/${cleaned.replace(/^\.\//, "")}`;
+};
+
 const getToken = () => localStorage.getItem("auth_token");
 
 export const apiRequest = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
@@ -149,13 +184,17 @@ export const apiRequest = async <T>(path: string, options: RequestOptions = {}):
 };
 
 const normalizeProduct = (product: ApiProduct) => {
+  const image = normalizeAssetUrl(product.image);
+  const hoverImage = normalizeAssetUrl(product.hoverImage) || image;
+  const images = (product.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean);
+
   return {
     id: product.id || product._id || "",
     title: product.title || product.name || "",
     generalName: product.generalName || "",
     slug: product.slug || "",
-    image: product.image || "",
-    hoverImage: product.hoverImage || product.image || "",
+    image,
+    hoverImage,
     price: product.price || 0,
     mrp: product.mrp || product.price || 0,
     discount: product.discount || 0,
@@ -167,7 +206,7 @@ const normalizeProduct = (product: ApiProduct) => {
     category: product.category || "uncategorized",
     brand: product.brand,
     description: product.description,
-    images: product.images,
+    images,
     specifications: product.specifications,
     availability: product.availability,
     emi: product.emi,
@@ -175,7 +214,17 @@ const normalizeProduct = (product: ApiProduct) => {
     returnPolicy: product.returnPolicy,
     reviews: product.reviews,
     ratingBreakdown: product.ratingBreakdown,
-    variants: product.variants,
+    variants: product.variants?.map((variant) => {
+      const variantImage = normalizeAssetUrl(variant.image);
+      const variantHoverImage = normalizeAssetUrl(variant.hoverImage) || variantImage;
+
+      return {
+        ...variant,
+        image: variantImage,
+        hoverImage: variantHoverImage,
+        images: (variant.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean),
+      };
+    }),
     ram: product.ram,
     storage: product.storage,
     battery: product.battery,
@@ -191,7 +240,7 @@ const normalizeCategory = (category: ApiCategory) => {
     id: category.id || category._id || "",
     title: category.title || category.name || "",
     slug: category.slug || "",
-    image: category.image || "",
+    image: normalizeAssetUrl(category.image),
     productCount: category.productCount || 0,
     status: category.status,
     description: category.description,
