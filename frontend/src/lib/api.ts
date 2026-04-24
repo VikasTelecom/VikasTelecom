@@ -217,6 +217,10 @@ export const apiRequest = async <T>(path: string, options: RequestOptions = {}):
   return data as T;
 };
 
+const isRouteNotFoundError = (error: unknown) => {
+  return error instanceof Error && /route not found/i.test(error.message);
+};
+
 const normalizeProduct = (product: ApiProduct) => {
   const image = normalizeAssetUrl(product.image);
   const hoverImage = normalizeAssetUrl(product.hoverImage) || image;
@@ -529,10 +533,22 @@ export const api = {
     return (data.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean);
   },
   adminUpdateHomeHeroBanners: async (images: string[]) => {
-    const data = await apiRequest<{ message: string; images: string[] }>("/admin/hero-banners", {
-      method: "PUT",
-      body: JSON.stringify({ images }),
-    });
+    let data: { message: string; images: string[] };
+    try {
+      data = await apiRequest<{ message: string; images: string[] }>("/admin/hero-banners", {
+        method: "PUT",
+        body: JSON.stringify({ images }),
+      });
+    } catch (error) {
+      if (!isRouteNotFoundError(error)) {
+        throw error;
+      }
+
+      data = await apiRequest<{ message: string; images: string[] }>("/banners/home-hero", {
+        method: "PUT",
+        body: JSON.stringify({ images }),
+      });
+    }
 
     return {
       ...data,
@@ -543,10 +559,22 @@ export const api = {
     const formData = new FormData();
     formData.append("image", file);
 
-    const data = await apiRequest<{ message: string; image: string }>("/admin/hero-banners/upload", {
-      method: "POST",
-      body: formData,
-    });
+    let data: { message: string; image: string };
+    try {
+      data = await apiRequest<{ message: string; image: string }>("/admin/hero-banners/upload", {
+        method: "POST",
+        body: formData,
+      });
+    } catch (error) {
+      if (!isRouteNotFoundError(error)) {
+        throw error;
+      }
+
+      data = await apiRequest<{ message: string; image: string }>("/banners/home-hero/upload", {
+        method: "POST",
+        body: formData,
+      });
+    }
 
     return {
       ...data,
