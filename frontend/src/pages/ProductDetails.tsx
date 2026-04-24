@@ -161,10 +161,14 @@ const ProductDetails = () => {
   const currentPrice = selectedVariant?.price || product.price;
   const currentMrp = selectedVariant?.mrp || product.mrp;
   const currentDiscount = selectedVariant?.discount || product.discount;
-  const currentImages =
+  const currentImagesSource =
     selectedVariant?.images && selectedVariant.images.length > 0
       ? selectedVariant.images
       : product.images;
+  const currentImages = currentImagesSource
+    .filter((img): img is string => typeof img === "string")
+    .map((img) => img.trim())
+    .filter((img) => img.length > 0);
   const currentStock =
     selectedVariant?.stock !== undefined ? selectedVariant.stock : 100; // Default to available
   const currentAvailability = currentStock > 0 ? "In Stock" : "Out of Stock";

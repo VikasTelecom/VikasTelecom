@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -19,6 +19,21 @@ export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
   const mainImageRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
+  const displayImages =
+    images
+      .filter((img) => typeof img === "string")
+      .map((img) => img.trim())
+      .filter((img) => img.length > 0) || [];
+  const safeImages = displayImages.length > 0 ? displayImages : [FALLBACK_IMAGE];
+
+  useEffect(() => {
+    setActiveIndex((prev) => {
+      if (prev < 0) return 0;
+      if (prev >= safeImages.length) return 0;
+      return prev;
+    });
+  }, [safeImages.length]);
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!mainImageRef.current || !isZoomed) return;
     const rect = mainImageRef.current.getBoundingClientRect();
@@ -27,8 +42,8 @@ export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
     setZoomPosition({ x, y });
   };
 
-  const handlePrev = () => setActiveIndex((i) => (i === 0 ? images.length - 1 : i - 1));
-  const handleNext = () => setActiveIndex((i) => (i === images.length - 1 ? 0 : i + 1));
+  const handlePrev = () => setActiveIndex((i) => (i === 0 ? safeImages.length - 1 : i - 1));
+  const handleNext = () => setActiveIndex((i) => (i === safeImages.length - 1 ? 0 : i + 1));
 
   // Mobile: swipe slider
   if (isMobile) {
@@ -38,7 +53,7 @@ export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
           <AnimatePresence mode="wait">
             <motion.img
               key={activeIndex}
-              src={images[activeIndex]}
+              src={safeImages[activeIndex]}
               alt={`${title} - Image ${activeIndex + 1}`}
               className="max-w-full max-h-[400px] w-auto h-auto object-contain"
               initial={{ opacity: 0 }}
@@ -66,7 +81,7 @@ export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
         </div>
         {/* Dot indicators */}
         <div className="flex justify-center gap-2 mt-4">
-          {images.map((_, i) => (
+          {safeImages.map((_, i) => (
             <button
               key={i}
               onClick={() => setActiveIndex(i)}
@@ -85,7 +100,7 @@ export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
     <div className="flex gap-2">
       {/* Vertical thumbnails */}
       <div className="flex flex-col gap-1 shrink-0">
-        {images.map((img, i) => (
+        {safeImages.map((img, i) => (
           <button
             key={i}
             onClick={() => setActiveIndex(i)}
@@ -120,7 +135,7 @@ export const ImageGallery = ({ images, title }: ImageGalleryProps) => {
         <AnimatePresence mode="wait">
           <motion.img
             key={activeIndex}
-            src={images[activeIndex]}
+            src={safeImages[activeIndex]}
             alt={`${title} - Image ${activeIndex + 1}`}
             className="w-full h-full object-contain transition-transform duration-200 p-2"
             style={
