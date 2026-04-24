@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -32,7 +32,8 @@ const ProductDetails = () => {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -267,10 +268,12 @@ const ProductDetails = () => {
     for (let i = 0; i < quantity; i++) {
       addToCart(product, selectedVariant || undefined);
     }
+    setIsCartOpen(false);
     toast({
       title: "Proceeding to Checkout",
       description: `${product.title} added. Redirecting...`,
     });
+    navigate("/checkout");
   };
 
   const handleWhatsAppInquiry = () => {
@@ -594,7 +597,36 @@ const ProductDetails = () => {
                   </div>
 
                   {/* Buttons */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:hidden space-y-3">
+                    <div className="flex gap-3">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleAddToCart}
+                        className="flex-1 py-3 bg-primary text-primary-foreground font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-primary-hover transition-colors shadow-md"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        Add to Cart
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleWhatsAppInquiry}
+                        className="flex-1 py-3 bg-[#25D366] text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:brightness-95 transition-colors shadow-md"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        WhatsApp
+                      </motion.button>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleBuyNow}
+                      className="w-full py-3 bg-foreground text-background font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-foreground/90 transition-colors shadow-md"
+                    >
+                      <Zap className="w-4 h-4" />
+                      Buy Now
+                    </motion.button>
+                  </div>
+
+                  <div className="hidden sm:grid sm:grid-cols-3 gap-3">
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={handleAddToCart}
