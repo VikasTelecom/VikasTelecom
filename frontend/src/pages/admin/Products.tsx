@@ -129,6 +129,29 @@ const defaultForm: ProductForm = {
   variants: [],
 };
 
+function syncVariant1Images(formState: ProductForm, updates: Partial<Pick<ProductForm, "image" | "hoverImage">>): ProductForm {
+  if (formState.variants.length === 0) {
+    return { ...formState, ...updates };
+  }
+
+  const nextImage = updates.image ?? formState.image;
+  const nextHoverImage = updates.hoverImage ?? formState.hoverImage;
+
+  return {
+    ...formState,
+    ...updates,
+    variants: formState.variants.map((variant, idx) =>
+      idx === 0
+        ? {
+            ...variant,
+            image: nextImage,
+            hoverImage: nextHoverImage,
+          }
+        : variant,
+    ),
+  };
+}
+
 function calcDiscount(price: string, mrp: string): string {
   const p = parseFloat(price);
   const m = parseFloat(mrp);
@@ -372,15 +395,18 @@ export default function Products() {
     const gallery = form.gallery.map((entry) => entry.trim()).filter(Boolean);
     const cleanVariants = form.variants
       .filter((variant) => variant.sku.trim())
-      .map((variant) => {
+      .map((variant, variantIndex) => {
         // Variant-specific gallery
         const variantGallery = variant.gallery
           ? variant.gallery.split(/\r?\n|,/).map((entry) => entry.trim()).filter(Boolean)
           : [];
         
+        const isVariantOne = variantIndex === 0;
         // Use variant images if provided, otherwise use product-level images
-        const variantMainImage = variant.image || form.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop";
-        const variantHoverImage = variant.hoverImage || form.hoverImage;
+        const variantMainImage = isVariantOne
+          ? (form.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop")
+          : (variant.image || form.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop");
+        const variantHoverImage = isVariantOne ? form.hoverImage : (variant.hoverImage || form.hoverImage);
         const variantAllImages = [variantMainImage, variantHoverImage, ...(variantGallery.length > 0 ? variantGallery : gallery)].filter(Boolean);
         
         // Use variant pricing if provided, otherwise use product-level pricing
@@ -915,7 +941,11 @@ export default function Products() {
                   <Input
                     placeholder="https://example.com/product-image.jpg"
                     value={form.image}
-                    onChange={(e) => setForm({ ...form, image: e.target.value })}
+                    onChange={(e) =>
+                      setForm((prev) =>
+                        syncVariant1Images(prev, { image: e.target.value }),
+                      )
+                    }
                     className="text-sm font-mono"
                   />
                   {form.image && (
@@ -956,7 +986,11 @@ export default function Products() {
                   <Input
                     placeholder="https://example.com/product-hover-image.jpg"
                     value={form.hoverImage}
-                    onChange={(e) => setForm({ ...form, hoverImage: e.target.value })}
+                    onChange={(e) =>
+                      setForm((prev) =>
+                        syncVariant1Images(prev, { hoverImage: e.target.value }),
+                      )
+                    }
                     className="text-sm font-mono"
                   />
                   {form.hoverImage && (
