@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { api } from "@/lib/api";
 
-const slides = [
+const defaultSlides = [
   {
     id: 1,
     title: "Premium Audio Experience",
@@ -29,11 +30,32 @@ const slides = [
   },
 ];
 
+const SLIDE_COUNT = defaultSlides.length;
+
 export const HeroSlider = () => {
   const [current, setCurrent] = useState(0);
+  const [slides, setSlides] = useState(defaultSlides);
 
-  const next = useCallback(() => setCurrent((p) => (p + 1) % slides.length), []);
-  const prev = useCallback(() => setCurrent((p) => (p - 1 + slides.length) % slides.length), []);
+  const next = useCallback(() => setCurrent((p) => (p + 1) % SLIDE_COUNT), []);
+  const prev = useCallback(() => setCurrent((p) => (p - 1 + SLIDE_COUNT) % SLIDE_COUNT), []);
+
+  useEffect(() => {
+    api
+      .fetchHomeHeroBanners()
+      .then((images) => {
+        if (!images.length) return;
+
+        setSlides(
+          defaultSlides.map((slide, idx) => ({
+            ...slide,
+            image: images[idx] || slide.image,
+          }))
+        );
+      })
+      .catch(() => {
+        // Keep default images if banner API fails.
+      });
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(next, 5000);

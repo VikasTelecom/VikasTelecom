@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Save, Store, Phone, Mail, Globe, MapPin, Bell, Shield, Palette, CreditCard, Truck, Package } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Save, Store, Phone, Mail, Globe, MapPin, Bell, Shield, Palette, CreditCard, Truck, Images, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 const SECTIONS = [
     { id: "store", label: "Store Info", icon: Store },
+    { id: "banners", label: "Hero Banners", icon: Images },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "shipping", label: "Shipping", icon: Truck },
     { id: "payment", label: "Payment", icon: CreditCard },
@@ -20,6 +22,10 @@ const SECTIONS = [
 
 export default function Settings() {
     const [activeSection, setActiveSection] = useState("store");
+    const [bannerImages, setBannerImages] = useState(["", "", ""]);
+    const [loadingBanners, setLoadingBanners] = useState(false);
+    const [savingBanners, setSavingBanners] = useState(false);
+    const [uploadingBanners, setUploadingBanners] = useState([false, false, false]);
 
     // Store Info
     const [store, setStore] = useState({
@@ -90,8 +96,51 @@ export default function Settings() {
         confirmPassword: "",
     });
 
+    useEffect(() => {
+        if (activeSection !== "banners") return;
+
+        setLoadingBanners(true);
+        api.fetchHomeHeroBanners()
+            .then((images) => {
+                const next = ["", "", ""];
+                for (let i = 0; i < 3; i += 1) {
+                    next[i] = images[i] || "";
+                }
+                setBannerImages(next);
+            })
+            .catch((error) => {
+                toast({
+                    title: "Failed to load hero banners",
+                    description: (error as Error).message,
+                    variant: "destructive",
+                });
+            })
+            .finally(() => setLoadingBanners(false));
+    }, [activeSection]);
+
     const handleSave = (section: string) => {
         toast({ title: `✅ ${section} settings saved successfully!` });
+    };
+
+    const handleBannerFileUpload = async (index: number, file: File) => {
+        setUploadingBanners((prev) => prev.map((value, idx) => (idx === index ? true : value)));
+        try {
+            const result = await api.adminUploadHeroBannerImage(file);
+            setBannerImages((prev) => {
+                const next = [...prev];
+                next[index] = result.image;
+                return next;
+            });
+            toast({ title: `Slide ${index + 1} image uploaded` });
+        } catch (error) {
+            toast({
+                title: `Failed to upload slide ${index + 1} image`,
+                description: (error as Error).message,
+                variant: "destructive",
+            });
+        } finally {
+            setUploadingBanners((prev) => prev.map((value, idx) => (idx === index ? false : value)));
+        }
     };
 
     return (
@@ -230,6 +279,109 @@ export default function Settings() {
                                         <Save className="w-4 h-4" /> Save Changes
                                     </Button>
                                 </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Hero Banners */}
+                    {activeSection === "banners" && (
+                        <Card>
+                            <CardHeader className="pb-4">
+                                <CardTitle className="flex items-center gap-2 text-base"><Images className="w-5 h-5 text-orange-500" /> Home Hero Banner Images</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <p className="text-sm text-muted-foreground">Update the 3 sliding banner images shown on the landing page.</p>
+
+                                {loadingBanners ? (
+                                    <p className="text-sm text-muted-foreground">Loading banner images...</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {bannerImages.map((url, idx) => (
+                                            <div key={idx} className="space-y-2">
+                                                <Label className="font-semibold">Slide {idx + 1} Image URL</Label>
+                                                <Input
+                                                    placeholder="https://..."
+                                                    value={url}
+                                                    onChange={(e) => {
+                                                        const next = [...bannerImages];
+                                                        next[idx] = e.target.value;
+                                                        setBannerImages(next);
+                                                    }}
+                                                    className="text-sm font-mono"
+                                                />
+                                                <div className="flex items-center gap-3">
+                                                    <Label
+                                                        htmlFor={`slide-upload-${idx}`}
+                                                        className="inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium cursor-pointer hover:bg-muted"
+                                                    >
+                                                        <Upload className="w-4 h-4" /> {uploadingBanners[idx] ? "Uploading..." : "Upload From Device"}
+                                                    </Label>
+                                                    <input
+                                                        id={`slide-upload-${idx}`}
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        disabled={uploadingBanners[idx]}
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                handleBannerFileUpload(idx, file);
+                                                            }
+                                                            e.currentTarget.value = "";
+                                                        }}
+                                                    />
+                                                    <span className="text-xs text-muted-foreground">JPG, PNG, WEBP up to 5MB</span>
+                                                </div>
+                                                {url ? (
+                                                    <img
+                                                        src={url}
+                                                        alt={`Slide ${idx + 1}`}
+                                                        className="w-full max-w-sm h-28 object-cover rounded-lg border"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).style.display = "none";
+                                                        }}
+                                                    />
+                                                ) : null}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <Button
+                                    className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+                                    disabled={loadingBanners || savingBanners}
+                                    onClick={async () => {
+                                        const cleaned = bannerImages.map((value) => value.trim());
+                                        if (cleaned.some((value) => !value)) {
+                                            toast({
+                                                title: "All 3 banner image URLs are required",
+                                                variant: "destructive",
+                                            });
+                                            return;
+                                        }
+
+                                        setSavingBanners(true);
+                                        try {
+                                            const result = await api.adminUpdateHomeHeroBanners(cleaned);
+                                            const next = ["", "", ""];
+                                            for (let i = 0; i < 3; i += 1) {
+                                                next[i] = result.images[i] || cleaned[i];
+                                            }
+                                            setBannerImages(next);
+                                            toast({ title: "Hero banners updated successfully" });
+                                        } catch (error) {
+                                            toast({
+                                                title: "Failed to update hero banners",
+                                                description: (error as Error).message,
+                                                variant: "destructive",
+                                            });
+                                        } finally {
+                                            setSavingBanners(false);
+                                        }
+                                    }}
+                                >
+                                    <Save className="w-4 h-4" /> {savingBanners ? "Saving..." : "Save Banner Images"}
+                                </Button>
                             </CardContent>
                         </Card>
                     )}

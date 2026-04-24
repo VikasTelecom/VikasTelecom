@@ -195,8 +195,9 @@ export const apiRequest = async <T>(path: string, options: RequestOptions = {}):
   const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
   const headers = new Headers(options.headers || {});
   const token = getToken();
+  const isFormDataBody = typeof FormData !== "undefined" && options.body instanceof FormData;
 
-  if (!headers.has("Content-Type") && options.body) {
+  if (!headers.has("Content-Type") && options.body && !isFormDataBody) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -522,6 +523,35 @@ export const api = {
   listMyOrders: async () => {
     const data = await apiRequest<{ items: ApiOrder[] }>("/orders/me");
     return data.items;
+  },
+  fetchHomeHeroBanners: async () => {
+    const data = await apiRequest<{ images: string[] }>("/banners/home-hero", { skipAuth: true });
+    return (data.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean);
+  },
+  adminUpdateHomeHeroBanners: async (images: string[]) => {
+    const data = await apiRequest<{ message: string; images: string[] }>("/admin/hero-banners", {
+      method: "PUT",
+      body: JSON.stringify({ images }),
+    });
+
+    return {
+      ...data,
+      images: (data.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean),
+    };
+  },
+  adminUploadHeroBannerImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const data = await apiRequest<{ message: string; image: string }>("/admin/hero-banners/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    return {
+      ...data,
+      image: normalizeAssetUrl(data.image),
+    };
   },
   fetchAdminAnalytics: async () => {
     return apiRequest<{ stats: unknown; salesData: unknown[]; recentOrders: unknown[]; categorySales: unknown[]; topProducts: unknown[] }>("/admin/analytics");
