@@ -8,6 +8,20 @@ const DEFAULT_HOME_HERO_IMAGES = [
   "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1400&h=600&fit=crop",
 ];
 
+const DEFAULT_HOME_HERO_TITLES = [
+  "Premium Audio Experience",
+  "Smart Charging Solutions",
+  "New Smartwatch Collection",
+];
+
+const DEFAULT_HOME_HERO_SUBTITLES = [
+  "Discover our latest collection of wireless speakers & earbuds",
+  "Fast, reliable, and designed for your lifestyle",
+  "Track your fitness goals with style and precision",
+];
+
+const DEFAULT_HOME_HERO_CTAS = ["Shop Now", "Explore", "View Collection"];
+
 const sanitizeImages = (images) => {
   if (!Array.isArray(images)) return [];
   return images
@@ -16,20 +30,41 @@ const sanitizeImages = (images) => {
     .slice(0, 10);
 };
 
+const sanitizeTexts = (values) => {
+  if (!Array.isArray(values)) return [];
+  return values
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .slice(0, 10);
+};
+
 const getHomeHeroBanners = async (req, res) => {
   const banner = await Banner.findOne({ key: HOME_HERO_KEY }).lean();
   const images = sanitizeImages(banner?.images);
+  const titles = sanitizeTexts(banner?.titles);
+  const subtitles = sanitizeTexts(banner?.subtitles);
+  const ctas = sanitizeTexts(banner?.ctas);
 
   return res.json({
     images: images.length ? images : DEFAULT_HOME_HERO_IMAGES,
+    titles: titles.length ? titles : DEFAULT_HOME_HERO_TITLES,
+    subtitles: subtitles.length ? subtitles : DEFAULT_HOME_HERO_SUBTITLES,
+    ctas: ctas.length ? ctas : DEFAULT_HOME_HERO_CTAS,
   });
 };
 
 const updateHomeHeroBanners = async (req, res) => {
   const images = sanitizeImages(req.body?.images);
+  const titles = sanitizeTexts(req.body?.titles);
+  const subtitles = sanitizeTexts(req.body?.subtitles);
+  const ctas = sanitizeTexts(req.body?.ctas);
 
   if (!images.length) {
     return res.status(400).json({ message: "At least one banner image is required" });
+  }
+
+  if (!titles.length || !subtitles.length || !ctas.length) {
+    return res.status(400).json({ message: "Hero banner title, subtitle and button text are required" });
   }
 
   const banner = await Banner.findOneAndUpdate(
@@ -38,6 +73,9 @@ const updateHomeHeroBanners = async (req, res) => {
       $set: {
         key: HOME_HERO_KEY,
         images,
+        titles,
+        subtitles,
+        ctas,
         updatedBy: req.user?.id,
       },
     },
@@ -50,8 +88,11 @@ const updateHomeHeroBanners = async (req, res) => {
   );
 
   return res.json({
-    message: "Hero banner images updated",
+    message: "Hero banners updated",
     images: banner.images,
+    titles: banner.titles || [],
+    subtitles: banner.subtitles || [],
+    ctas: banner.ctas || [],
   });
 };
 

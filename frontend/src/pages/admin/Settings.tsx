@@ -23,6 +23,9 @@ const SECTIONS = [
 export default function Settings() {
     const [activeSection, setActiveSection] = useState("store");
     const [bannerImages, setBannerImages] = useState(["", "", ""]);
+    const [bannerTitles, setBannerTitles] = useState(["", "", ""]);
+    const [bannerSubtitles, setBannerSubtitles] = useState(["", "", ""]);
+    const [bannerCtas, setBannerCtas] = useState(["", "", ""]);
     const [loadingBanners, setLoadingBanners] = useState(false);
     const [savingBanners, setSavingBanners] = useState(false);
     const [uploadingBanners, setUploadingBanners] = useState([false, false, false]);
@@ -101,12 +104,21 @@ export default function Settings() {
 
         setLoadingBanners(true);
         api.fetchHomeHeroBanners()
-            .then((images) => {
-                const next = ["", "", ""];
+            .then((banner) => {
+                const nextImages = ["", "", ""];
+                const nextTitles = ["", "", ""];
+                const nextSubtitles = ["", "", ""];
+                const nextCtas = ["", "", ""];
                 for (let i = 0; i < 3; i += 1) {
-                    next[i] = images[i] || "";
+                    nextImages[i] = banner.images[i] || "";
+                    nextTitles[i] = banner.titles[i] || "";
+                    nextSubtitles[i] = banner.subtitles[i] || "";
+                    nextCtas[i] = banner.ctas[i] || "";
                 }
-                setBannerImages(next);
+                setBannerImages(nextImages);
+                setBannerTitles(nextTitles);
+                setBannerSubtitles(nextSubtitles);
+                setBannerCtas(nextCtas);
             })
             .catch((error) => {
                 toast({
@@ -290,7 +302,7 @@ export default function Settings() {
                                 <CardTitle className="flex items-center gap-2 text-base"><Images className="w-5 h-5 text-orange-500" /> Home Hero Banner Images</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <p className="text-sm text-muted-foreground">Update the 3 sliding banner images shown on the landing page.</p>
+                                <p className="text-sm text-muted-foreground">Update the 3 sliding banner images and text shown on the landing page.</p>
 
                                 {loadingBanners ? (
                                     <p className="text-sm text-muted-foreground">Loading banner images...</p>
@@ -332,6 +344,37 @@ export default function Settings() {
                                                     />
                                                     <span className="text-xs text-muted-foreground">JPG, PNG, WEBP up to 5MB</span>
                                                 </div>
+                                                <Label className="font-semibold">Slide {idx + 1} Title</Label>
+                                                <Input
+                                                    placeholder="Enter slide title"
+                                                    value={bannerTitles[idx]}
+                                                    onChange={(e) => {
+                                                        const next = [...bannerTitles];
+                                                        next[idx] = e.target.value;
+                                                        setBannerTitles(next);
+                                                    }}
+                                                />
+                                                <Label className="font-semibold">Slide {idx + 1} Subtitle</Label>
+                                                <Textarea
+                                                    placeholder="Enter slide subtitle"
+                                                    value={bannerSubtitles[idx]}
+                                                    onChange={(e) => {
+                                                        const next = [...bannerSubtitles];
+                                                        next[idx] = e.target.value;
+                                                        setBannerSubtitles(next);
+                                                    }}
+                                                    className="resize-none min-h-[70px] text-sm"
+                                                />
+                                                <Label className="font-semibold">Slide {idx + 1} Button Text</Label>
+                                                <Input
+                                                    placeholder="e.g. Shop Now"
+                                                    value={bannerCtas[idx]}
+                                                    onChange={(e) => {
+                                                        const next = [...bannerCtas];
+                                                        next[idx] = e.target.value;
+                                                        setBannerCtas(next);
+                                                    }}
+                                                />
                                                 {url ? (
                                                     <img
                                                         src={url}
@@ -351,8 +394,12 @@ export default function Settings() {
                                     className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
                                     disabled={loadingBanners || savingBanners}
                                     onClick={async () => {
-                                        const cleaned = bannerImages.map((value) => value.trim());
-                                        if (cleaned.some((value) => !value)) {
+                                        const cleanedImages = bannerImages.map((value) => value.trim());
+                                        const cleanedTitles = bannerTitles.map((value) => value.trim());
+                                        const cleanedSubtitles = bannerSubtitles.map((value) => value.trim());
+                                        const cleanedCtas = bannerCtas.map((value) => value.trim());
+
+                                        if (cleanedImages.some((value) => !value)) {
                                             toast({
                                                 title: "All 3 banner image URLs are required",
                                                 variant: "destructive",
@@ -360,15 +407,37 @@ export default function Settings() {
                                             return;
                                         }
 
+                                        if (cleanedTitles.some((value) => !value) || cleanedSubtitles.some((value) => !value) || cleanedCtas.some((value) => !value)) {
+                                            toast({
+                                                title: "All 3 slides need title, subtitle and button text",
+                                                variant: "destructive",
+                                            });
+                                            return;
+                                        }
+
                                         setSavingBanners(true);
                                         try {
-                                            const result = await api.adminUpdateHomeHeroBanners(cleaned);
-                                            const next = ["", "", ""];
+                                            const result = await api.adminUpdateHomeHeroBanners({
+                                                images: cleanedImages,
+                                                titles: cleanedTitles,
+                                                subtitles: cleanedSubtitles,
+                                                ctas: cleanedCtas,
+                                            });
+                                            const nextImages = ["", "", ""];
+                                            const nextTitles = ["", "", ""];
+                                            const nextSubtitles = ["", "", ""];
+                                            const nextCtas = ["", "", ""];
                                             for (let i = 0; i < 3; i += 1) {
-                                                next[i] = result.images[i] || cleaned[i];
+                                                nextImages[i] = result.images[i] || cleanedImages[i];
+                                                nextTitles[i] = result.titles[i] || cleanedTitles[i];
+                                                nextSubtitles[i] = result.subtitles[i] || cleanedSubtitles[i];
+                                                nextCtas[i] = result.ctas[i] || cleanedCtas[i];
                                             }
-                                            setBannerImages(next);
-                                            toast({ title: "Hero banners updated successfully" });
+                                            setBannerImages(nextImages);
+                                            setBannerTitles(nextTitles);
+                                            setBannerSubtitles(nextSubtitles);
+                                            setBannerCtas(nextCtas);
+                                            toast({ title: "Hero banners and text updated successfully" });
                                         } catch (error) {
                                             toast({
                                                 title: "Failed to update hero banners",
@@ -380,7 +449,7 @@ export default function Settings() {
                                         }
                                     }}
                                 >
-                                    <Save className="w-4 h-4" /> {savingBanners ? "Saving..." : "Save Banner Images"}
+                                    <Save className="w-4 h-4" /> {savingBanners ? "Saving..." : "Save Banner Content"}
                                 </Button>
                             </CardContent>
                         </Card>

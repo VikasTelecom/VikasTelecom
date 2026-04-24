@@ -42,13 +42,16 @@ export const HeroSlider = () => {
   useEffect(() => {
     api
       .fetchHomeHeroBanners()
-      .then((images) => {
-        if (!images.length) return;
+      .then((banner) => {
+        if (!banner.images.length && !banner.titles.length && !banner.subtitles.length && !banner.ctas.length) return;
 
         setSlides(
           defaultSlides.map((slide, idx) => ({
             ...slide,
-            image: images[idx] || slide.image,
+            image: banner.images[idx] || slide.image,
+            title: banner.titles[idx] || slide.title,
+            subtitle: banner.subtitles[idx] || slide.subtitle,
+            cta: banner.ctas[idx] || slide.cta,
           }))
         );
       })

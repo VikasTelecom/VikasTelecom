@@ -119,6 +119,13 @@ type Paginated<T> = {
   total: number;
 };
 
+type HeroBannerPayload = {
+  images: string[];
+  titles: string[];
+  subtitles: string[];
+  ctas: string[];
+};
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://vikastelecom.onrender.com/api";
 
 const API_ORIGIN = (() => {
@@ -529,30 +536,44 @@ export const api = {
     return data.items;
   },
   fetchHomeHeroBanners: async () => {
-    const data = await apiRequest<{ images: string[] }>("/banners/home-hero", { skipAuth: true });
-    return (data.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean);
+    const data = await apiRequest<{
+      images?: string[];
+      titles?: string[];
+      subtitles?: string[];
+      ctas?: string[];
+    }>("/banners/home-hero", { skipAuth: true });
+
+    return {
+      images: (data.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean),
+      titles: (data.titles || []).map((value) => String(value || "").trim()).filter(Boolean),
+      subtitles: (data.subtitles || []).map((value) => String(value || "").trim()).filter(Boolean),
+      ctas: (data.ctas || []).map((value) => String(value || "").trim()).filter(Boolean),
+    } satisfies HeroBannerPayload;
   },
-  adminUpdateHomeHeroBanners: async (images: string[]) => {
-    let data: { message: string; images: string[] };
+  adminUpdateHomeHeroBanners: async (payload: HeroBannerPayload) => {
+    let data: { message: string; images: string[]; titles?: string[]; subtitles?: string[]; ctas?: string[] };
     try {
-      data = await apiRequest<{ message: string; images: string[] }>("/admin/hero-banners", {
+      data = await apiRequest<{ message: string; images: string[]; titles?: string[]; subtitles?: string[]; ctas?: string[] }>("/admin/hero-banners", {
         method: "PUT",
-        body: JSON.stringify({ images }),
+        body: JSON.stringify(payload),
       });
     } catch (error) {
       if (!isRouteNotFoundError(error)) {
         throw error;
       }
 
-      data = await apiRequest<{ message: string; images: string[] }>("/banners/home-hero", {
+      data = await apiRequest<{ message: string; images: string[]; titles?: string[]; subtitles?: string[]; ctas?: string[] }>("/banners/home-hero", {
         method: "PUT",
-        body: JSON.stringify({ images }),
+        body: JSON.stringify(payload),
       });
     }
 
     return {
       ...data,
       images: (data.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean),
+      titles: (data.titles || []).map((value) => String(value || "").trim()).filter(Boolean),
+      subtitles: (data.subtitles || []).map((value) => String(value || "").trim()).filter(Boolean),
+      ctas: (data.ctas || []).map((value) => String(value || "").trim()).filter(Boolean),
     };
   },
   adminUploadHeroBannerImage: async (file: File) => {
