@@ -140,15 +140,13 @@ export const MobileCategoriesPanel = ({ onClose }: Props) => {
                             </div>
                           </Link>
                         ))}
-                        {categoryProducts[cat.slug].length >= 5 && (
-                          <Link
-                            to={`/categories/${cat.slug}`}
-                            onClick={onClose}
-                            className="block px-4 py-2.5 text-sm text-center text-primary hover:bg-accent rounded-lg transition-colors font-medium"
-                          >
-                            View All {cat.productCount} Products →
-                          </Link>
-                        )}
+                        <Link
+                          to={`/categories/${cat.slug}`}
+                          onClick={onClose}
+                          className="block px-4 py-2.5 text-sm text-center text-primary hover:bg-accent rounded-lg transition-colors font-medium"
+                        >
+                          View All Products →
+                        </Link>
                       </div>
                     ) : (
                       <div className="py-4 text-center">
@@ -158,7 +156,7 @@ export const MobileCategoriesPanel = ({ onClose }: Props) => {
                           onClick={onClose}
                           className="text-sm text-primary hover:underline mt-1 inline-block"
                         >
-                          Browse category
+                          View All Products
                         </Link>
                       </div>
                     )}

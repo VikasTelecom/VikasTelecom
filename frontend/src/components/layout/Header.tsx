@@ -337,8 +337,8 @@ export const Header = () => {
               )}
 
               <button
-                onClick={() => navigate(isAuthenticated ? "/orders" : "/cart")}
-                className="p-2 rounded-full hover:bg-muted transition-colors relative"
+                onClick={() => navigate("/cart")}
+                className="hidden sm:flex p-2 rounded-full hover:bg-muted transition-colors relative"
                 aria-label="Cart"
               >
                 <ShoppingCart className="w-5 h-5" />
@@ -353,6 +353,16 @@ export const Header = () => {
                   </motion.span>
                 )}
               </button>
+
+              {isAuthenticated && (
+                <button
+                  onClick={() => navigate("/orders")}
+                  className="hidden sm:flex p-2 rounded-full hover:bg-muted transition-colors"
+                  aria-label="My Orders"
+                >
+                  <Package className="w-5 h-5" />
+                </button>
+              )}
 
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

@@ -308,9 +308,12 @@ const ProductDetails = () => {
               Home
             </Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <span className="capitalize">
+            <Link
+              to={`/categories/${encodeURIComponent(String(product.category || "").toLowerCase().replace(/\s+/g, "-"))}`}
+              className="capitalize hover:text-primary transition-colors"
+            >
               {product.category.replace(/-/g, " ")}
-            </span>
+            </Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-foreground truncate max-w-[200px]">
               {product.title}

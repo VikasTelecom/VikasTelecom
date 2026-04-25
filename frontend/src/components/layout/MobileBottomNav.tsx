@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, LayoutGrid, User, ShoppingCart } from "lucide-react";
+import { Home, LayoutGrid, User, ShoppingCart, Package } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,14 +20,15 @@ export const MobileBottomNav = () => {
 
   const navItems = [
     { label: "Home", icon: Home, path: "/" },
+    { label: "Category", icon: LayoutGrid, path: "#categories" },
+    { label: "Add to Cart", icon: ShoppingCart, path: "/cart" },
+    ...(isAuthenticated ? [{ label: "My Order", icon: Package, path: "/orders" }] : []),
     { label: "WhatsApp", icon: null, customIcon: WhatsAppIcon, path: "#whatsapp" },
-    { label: "Categories", icon: LayoutGrid, path: "#categories" },
     { label: isAuthenticated ? "Profile" : "Log In", icon: User, path: isAuthenticated ? "/profile" : "/login" },
-    { label: "Cart", icon: ShoppingCart, path: "/cart" },
   ];
 
   const handleClick = (item: (typeof navItems)[0], e: React.MouseEvent) => {
-    if (item.label === "Categories") {
+    if (item.label === "Category") {
       e.preventDefault();
       setShowCategories(true);
     } else if (item.label === "WhatsApp") {
@@ -50,7 +51,7 @@ export const MobileBottomNav = () => {
             const isActive = item.path.startsWith("/") && pathname === item.path;
             const Icon = item.icon;
             const CustomIcon = item.customIcon;
-            const isCart = item.label === "Cart";
+            const isCart = item.label === "Add to Cart";
             const isWhatsApp = item.label === "WhatsApp";
             const isAction = item.path.startsWith("#");
 
