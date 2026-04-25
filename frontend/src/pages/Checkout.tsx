@@ -50,6 +50,11 @@ const Checkout = () => {
   const [setAsDefault, setSetAsDefault] = useState(true);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [qrImageError, setQrImageError] = useState(false);
+  const [paymentSettings, setPaymentSettings] = useState({
+    upiEnabled: true,
+    codEnabled: true,
+  });
+  const [loadingPaymentSettings, setLoadingPaymentSettings] = useState(false);
   const [form, setForm] = useState({
     label: "Home",
     name: "",
@@ -77,14 +82,42 @@ const Checkout = () => {
       });
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    setLoadingPaymentSettings(true);
+    api.fetchPublicPaymentSettings()
+      .then((settings) => {
+        setPaymentSettings({
+          upiEnabled: settings.upiEnabled,
+          codEnabled: settings.codEnabled,
+        });
+      })
+      .catch(() => {
+        // Keep default enabled methods if settings endpoint fails.
+      })
+      .finally(() => setLoadingPaymentSettings(false));
+  }, []);
+
+  useEffect(() => {
+    if (paymentMethod === "upi" && !paymentSettings.upiEnabled) {
+      if (paymentSettings.codEnabled) {
+        setPaymentMethod("cod");
+      }
+    }
+
+    if (paymentMethod === "cod" && !paymentSettings.codEnabled) {
+      if (paymentSettings.upiEnabled) {
+        setPaymentMethod("upi");
+      }
+    }
+  }, [paymentMethod, paymentSettings]);
+
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const shipping = useMemo(() => (subtotal >= 999 ? 0 : 49), [subtotal]);
-  const gst = useMemo(() => Math.round(subtotal * 0.12), [subtotal]);
   const couponDiscount = useMemo(() => discountAmount, [discountAmount]);
   const codFee = useMemo(() => (paymentMethod === "cod" ? 49 : 0), [paymentMethod]);
   const finalTotal = useMemo(
-    () => Math.max(0, subtotal + shipping + gst + codFee - couponDiscount),
-    [subtotal, shipping, gst, codFee, couponDiscount],
+    () => Math.max(0, subtotal + shipping + codFee - couponDiscount),
+    [subtotal, shipping, codFee, couponDiscount],
   );
   const estimatedDelivery = useMemo(() => {
     const date = new Date();
@@ -223,7 +256,15 @@ const Checkout = () => {
       return;
     }
     try {
-      const res = await api.validateCoupon(couponCode, subtotal);
+      const res = await api.validateCoupon(
+        couponCode,
+        subtotal,
+        items.map((item) => ({
+          productId: item.product.id,
+          category: item.product.category,
+          brand: item.product.brand,
+        })),
+      );
       setDiscountAmount(res.discountAmount);
       setCouponApplied(true);
       toast({ title: "Coupon applied", description: `You saved ₹${res.discountAmount}` });
@@ -249,6 +290,10 @@ const Checkout = () => {
     }
     if (items.length === 0) {
       toast({ title: "Cart is empty", variant: "destructive" });
+      return;
+    }
+    if (!paymentSettings.upiEnabled && !paymentSettings.codEnabled) {
+      toast({ title: "No payment methods available", description: "Please contact support.", variant: "destructive" });
       return;
     }
     try {
@@ -278,7 +323,6 @@ const Checkout = () => {
         total: finalTotal,
         subtotal,
         shipping,
-        gst,
         discount: couponDiscount,
         paymentMethod,
         address,
@@ -539,11 +583,18 @@ const Checkout = () => {
                 <h2 className="text-lg font-semibold">Payment Method</h2>
                 <p className="text-sm text-muted-foreground">Choose the most convenient and secure payment option.</p>
               </div>
+              {loadingPaymentSettings && (
+                <p className="text-xs text-muted-foreground">Loading payment settings...</p>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {[
                   { value: "cod", label: "Cash on Delivery", note: "Pay when it arrives" },
                   { value: "upi", label: "UPI", note: "Instant bank transfer" },
-                ].map((method) => (
+                ]
+                  .filter((method) =>
+                    method.value === "upi" ? paymentSettings.upiEnabled : paymentSettings.codEnabled,
+                  )
+                  .map((method) => (
                   <label
                     key={method.value}
                     className={`flex items-start gap-3 rounded-xl border p-4 cursor-pointer ${
@@ -563,9 +614,14 @@ const Checkout = () => {
                   </label>
                 ))}
               </div>
+              {!paymentSettings.upiEnabled && !paymentSettings.codEnabled && (
+                <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                  Payment is temporarily unavailable. Please contact support.
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                <span className="rounded-full border px-2 py-1">UPI</span>
-                <span className="rounded-full border px-2 py-1">Cash on Delivery</span>
+                {paymentSettings.upiEnabled && <span className="rounded-full border px-2 py-1">UPI</span>}
+                {paymentSettings.codEnabled && <span className="rounded-full border px-2 py-1">Cash on Delivery</span>}
               </div>
               {paymentMethod === "cod" && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
@@ -637,8 +693,6 @@ const Checkout = () => {
               <h2 className="text-lg font-semibold mb-3">Trust & Support</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
                 {[
-                  "100% Secure Payment",
-                  "Easy 7-day Return",
                   "Fast Delivery",
                   "Customer Support 24/7",
                 ].map((item) => (
@@ -695,10 +749,6 @@ const Checkout = () => {
                   <span>Shipping</span>
                   <span>{shipping === 0 ? "Free" : `₹${shipping}`}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>GST</span>
-                  <span>₹{gst.toLocaleString()}</span>
-                </div>
                 {codFee > 0 && (
                   <div className="flex items-center justify-between">
                     <span>COD fee</span>
@@ -754,10 +804,6 @@ const Checkout = () => {
                 <div className="flex items-center justify-between">
                   <span>Shipping</span>
                   <span>{shipping === 0 ? "Free" : `₹${shipping}`}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>GST</span>
-                  <span>₹{gst.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between font-semibold">
                   <span>Total</span>

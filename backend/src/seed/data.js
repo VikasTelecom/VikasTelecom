@@ -58,7 +58,7 @@ const products = [
     ],
     availability: "In Stock",
     deliveryInfo: "Free delivery in 2-5 days",
-    returnPolicy: "7-day replacement policy",
+    returnPolicy: "Replacement only for defective products within 7 days.",
     reviews: [],
     ratingBreakdown: [
       { stars: 5, count: 0 },

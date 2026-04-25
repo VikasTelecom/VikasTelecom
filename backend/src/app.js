@@ -15,6 +15,7 @@ const addressRoutes = require("./routes/addressRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const bannerRoutes = require("./routes/bannerRoutes");
 const couponRoutes = require("./routes/couponRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 const { notFound, errorHandler } = require("./middleware/error");
 
 const app = express();
@@ -94,6 +95,7 @@ app.use("/api/addresses", addressRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/payment", paymentRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

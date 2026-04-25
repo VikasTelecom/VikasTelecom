@@ -6,6 +6,7 @@ import {
   ShoppingCart,
   Zap,
   MessageCircle,
+  PhoneCall,
   Minus,
   Plus,
   ChevronRight,
@@ -23,7 +24,7 @@ import type { ProductDetail } from "@/data/productDetails";
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
-import { openProductWhatsApp } from "@/lib/whatsapp";
+import { openProductWhatsApp, WHATSAPP_BUSINESS_NUMBER } from "@/lib/whatsapp";
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -68,7 +69,7 @@ const ProductDetails = () => {
         availability: base.availability || "In Stock",
         deliveryInfo: base.deliveryInfo || "Free delivery in 2-5 days.",
         returnPolicy:
-          base.returnPolicy || "7-day replacement policy. Easy returns.",
+          base.returnPolicy || "Replacement only for defective products within 7 days.",
         reviews: base.reviews || [],
         ratingBreakdown: base.ratingBreakdown || [],
         variants: base.variants || [],
@@ -288,6 +289,10 @@ const ProductDetails = () => {
       : product.title;
 
     openProductWhatsApp(productLabel);
+  };
+
+  const handleRapidDeliveryCall = () => {
+    window.location.href = `tel:+${WHATSAPP_BUSINESS_NUMBER}`;
   };
 
   return (
@@ -613,7 +618,7 @@ const ProductDetails = () => {
                         className="flex-1 py-3 bg-[#25D366] text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:brightness-95 transition-colors shadow-md"
                       >
                         <MessageCircle className="w-4 h-4" />
-                        WhatsApp
+                        Click Your Best Price
                       </motion.button>
                     </div>
                     <motion.button
@@ -624,9 +629,17 @@ const ProductDetails = () => {
                       <Zap className="w-4 h-4" />
                       Buy Now
                     </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleRapidDeliveryCall}
+                      className="w-full py-3 bg-[#facc15] text-black font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:brightness-95 transition-colors shadow-md"
+                    >
+                      <PhoneCall className="w-4 h-4" />
+                      Rapid Delivery
+                    </motion.button>
                   </div>
 
-                  <div className="hidden sm:grid sm:grid-cols-3 gap-3">
+                  <div className="hidden sm:grid sm:grid-cols-4 gap-3">
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={handleAddToCart}
@@ -649,7 +662,15 @@ const ProductDetails = () => {
                       className="py-3 bg-[#25D366] text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:brightness-95 transition-colors shadow-md"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      WhatsApp
+                      Click Your Best Price
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleRapidDeliveryCall}
+                      className="py-3 bg-[#facc15] text-black font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:brightness-95 transition-colors shadow-md"
+                    >
+                      <PhoneCall className="w-4 h-4" />
+                      Rapid Delivery
                     </motion.button>
                   </div>
                 </div>
@@ -697,7 +718,7 @@ const ProductDetails = () => {
             onClick={handleWhatsAppInquiry}
             className="px-4 py-2.5 bg-[#25D366] text-white font-semibold rounded-lg text-xs shadow-md"
           >
-            WhatsApp
+            Click Your Best Price
           </motion.button>
         </div>
       )}

@@ -124,6 +124,7 @@ type HeroBannerPayload = {
   titles: string[];
   subtitles: string[];
   ctas: string[];
+  textColors: string[];
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://vikastelecom.onrender.com/api";
@@ -357,10 +358,14 @@ export const api = {
       method: "DELETE",
     });
   },
-  validateCoupon: async (code: string, cartTotal: number) => {
+  validateCoupon: async (
+    code: string,
+    cartTotal: number,
+    cartItems?: Array<{ productId?: string; category?: string; brand?: string }>,
+  ) => {
     return apiRequest<any>("/coupons/validate", {
       method: "POST",
-      body: JSON.stringify({ code, cartTotal }),
+      body: JSON.stringify({ code, cartTotal, cartItems: cartItems || [] }),
       skipAuth: true,
     });
   },
@@ -541,6 +546,7 @@ export const api = {
       titles?: string[];
       subtitles?: string[];
       ctas?: string[];
+      textColors?: string[];
     }>("/banners/home-hero", { skipAuth: true });
 
     return {
@@ -548,12 +554,13 @@ export const api = {
       titles: (data.titles || []).map((value) => String(value || "").trim()).filter(Boolean),
       subtitles: (data.subtitles || []).map((value) => String(value || "").trim()).filter(Boolean),
       ctas: (data.ctas || []).map((value) => String(value || "").trim()).filter(Boolean),
+      textColors: (data.textColors || []).map((value) => String(value || "").trim()).filter(Boolean),
     } satisfies HeroBannerPayload;
   },
   adminUpdateHomeHeroBanners: async (payload: HeroBannerPayload) => {
-    let data: { message: string; images: string[]; titles?: string[]; subtitles?: string[]; ctas?: string[] };
+    let data: { message: string; images: string[]; titles?: string[]; subtitles?: string[]; ctas?: string[]; textColors?: string[] };
     try {
-      data = await apiRequest<{ message: string; images: string[]; titles?: string[]; subtitles?: string[]; ctas?: string[] }>("/admin/hero-banners", {
+      data = await apiRequest<{ message: string; images: string[]; titles?: string[]; subtitles?: string[]; ctas?: string[]; textColors?: string[] }>("/admin/hero-banners", {
         method: "PUT",
         body: JSON.stringify(payload),
       });
@@ -562,7 +569,7 @@ export const api = {
         throw error;
       }
 
-      data = await apiRequest<{ message: string; images: string[]; titles?: string[]; subtitles?: string[]; ctas?: string[] }>("/banners/home-hero", {
+      data = await apiRequest<{ message: string; images: string[]; titles?: string[]; subtitles?: string[]; ctas?: string[]; textColors?: string[] }>("/banners/home-hero", {
         method: "PUT",
         body: JSON.stringify(payload),
       });
@@ -574,6 +581,7 @@ export const api = {
       titles: (data.titles || []).map((value) => String(value || "").trim()).filter(Boolean),
       subtitles: (data.subtitles || []).map((value) => String(value || "").trim()).filter(Boolean),
       ctas: (data.ctas || []).map((value) => String(value || "").trim()).filter(Boolean),
+      textColors: (data.textColors || []).map((value) => String(value || "").trim()).filter(Boolean),
     };
   },
   adminUploadHeroBannerImage: async (file: File) => {
@@ -604,5 +612,34 @@ export const api = {
   },
   fetchAdminAnalytics: async () => {
     return apiRequest<{ stats: unknown; salesData: unknown[]; recentOrders: unknown[]; categorySales: unknown[]; topProducts: unknown[] }>("/admin/analytics");
+  },
+  adminGetPaymentSettings: async () => {
+    return apiRequest<{
+      upiEnabled: boolean;
+      codEnabled: boolean;
+    }>("/admin/payment-settings");
+  },
+  adminUpdatePaymentSettings: async (payload: {
+    upiEnabled: boolean;
+    codEnabled: boolean;
+  }) => {
+    const data = await apiRequest<{
+      message: string;
+      settings: {
+        upiEnabled: boolean;
+        codEnabled: boolean;
+      };
+    }>("/admin/payment-settings", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+
+    return data.settings;
+  },
+  fetchPublicPaymentSettings: async () => {
+    return apiRequest<{
+      upiEnabled: boolean;
+      codEnabled: boolean;
+    }>("/payment/settings", { skipAuth: true });
   },
 };

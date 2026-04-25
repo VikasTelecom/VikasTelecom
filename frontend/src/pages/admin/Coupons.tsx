@@ -42,6 +42,9 @@ interface Coupon {
   usageLimit: number;
   usedCount: number;
   isActive: boolean;
+  applicabilityType?: "all" | "brand" | "category" | "product";
+  applicabilityValue?: string;
+  applicabilityLabel?: string;
   createdAt: string;
 }
 
@@ -53,6 +56,9 @@ const defaultForm = {
   maxDiscount: "",
   expirationDate: "",
   usageLimit: "1000",
+  applicabilityType: "all",
+  applicabilityValue: "",
+  applicabilityLabel: "",
 };
 
 export default function Coupons() {
@@ -61,11 +67,60 @@ export default function Coupons() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState(defaultForm);
+  const [brands, setBrands] = useState<Array<{ id: string; name: string }>>([]);
+  const [categories, setCategories] = useState<Array<{ id: string; title: string }>>([]);
+  const [products, setProducts] = useState<Array<{ id: string; title: string }>>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchCoupons();
   }, []);
+
+  useEffect(() => {
+    const loadApplicabilityData = async () => {
+      try {
+        const [brandsData, categoriesData, productsData] = await Promise.all([
+          api.adminListBrands(),
+          api.adminListCategories(),
+          api.adminListProducts({ limit: 500 }),
+        ]);
+
+        setBrands(
+          (brandsData || []).map((brand: any) => ({
+            id: brand.id || brand._id || brand.slug || brand.name,
+            name: brand.name || brand.title || "",
+          })),
+        );
+
+        setCategories(
+          (categoriesData || []).map((category: any) => ({
+            id: category.id || category._id || category.slug || category.title,
+            title: category.title || category.name || "",
+          })),
+        );
+
+        setProducts(
+          (productsData?.items || []).map((product: any) => ({
+            id: product.id || product._id,
+            title: product.title || product.name || "",
+          })),
+        );
+      } catch {
+        // If lookup data fails, coupon creation still works for global coupons.
+      }
+    };
+
+    loadApplicabilityData();
+  }, []);
+
+  const selectedApplicabilityLabel =
+    formData.applicabilityType === "brand"
+      ? brands.find((item) => item.name === formData.applicabilityValue)?.name || ""
+      : formData.applicabilityType === "category"
+      ? categories.find((item) => item.title === formData.applicabilityValue)?.title || ""
+      : formData.applicabilityType === "product"
+      ? products.find((item) => item.id === formData.applicabilityValue)?.title || ""
+      : "";
 
   const fetchCoupons = async () => {
     try {
@@ -84,6 +139,19 @@ export default function Coupons() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (
+      ["brand", "category", "product"].includes(formData.applicabilityType) &&
+      !formData.applicabilityValue
+    ) {
+      toast({
+        title: "Error",
+        description: "Please select a target for coupon applicability",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -93,6 +161,7 @@ export default function Coupons() {
         minPurchase: Number(formData.minPurchase),
         maxDiscount: formData.maxDiscount ? Number(formData.maxDiscount) : undefined,
         usageLimit: Number(formData.usageLimit),
+        applicabilityLabel: selectedApplicabilityLabel || undefined,
       });
 
       toast({
@@ -171,6 +240,7 @@ export default function Coupons() {
                 <TableHead>Discount</TableHead>
                 <TableHead>Min Purchase</TableHead>
                 <TableHead>Usage</TableHead>
+                    <TableHead>Applies To</TableHead>
                 <TableHead>Expires</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -179,13 +249,13 @@ export default function Coupons() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24">
+                  <TableCell colSpan={8} className="text-center h-24">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : filteredCoupons.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
                     No coupons found
                   </TableCell>
                 </TableRow>
@@ -211,6 +281,11 @@ export default function Coupons() {
                     <TableCell>₹{coupon.minPurchase}</TableCell>
                     <TableCell>
                       {coupon.usedCount} / {coupon.usageLimit}
+                    </TableCell>
+                    <TableCell>
+                      {coupon.applicabilityType && coupon.applicabilityType !== "all"
+                        ? `${coupon.applicabilityType}: ${coupon.applicabilityLabel || coupon.applicabilityValue || "-"}`
+                        : "All products"}
                     </TableCell>
                     <TableCell>{format(new Date(coupon.expirationDate), "MMM dd, yyyy")}</TableCell>
                     <TableCell>
@@ -338,6 +413,109 @@ export default function Coupons() {
                 </div>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="applicabilityType">Coupon Applicability</Label>
+              <Select
+                value={formData.applicabilityType}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    applicabilityType: value,
+                    applicabilityValue: "",
+                    applicabilityLabel: "",
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Products</SelectItem>
+                  <SelectItem value="brand">Specific Brand</SelectItem>
+                  <SelectItem value="category">Specific Category</SelectItem>
+                  <SelectItem value="product">Specific Product</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {formData.applicabilityType === "brand" && (
+              <div className="space-y-2">
+                <Label>Select Brand</Label>
+                <Select
+                  value={formData.applicabilityValue}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      applicabilityValue: value,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a brand" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {brands.map((brand) => (
+                      <SelectItem key={brand.id} value={brand.name}>
+                        {brand.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {formData.applicabilityType === "category" && (
+              <div className="space-y-2">
+                <Label>Select Category</Label>
+                <Select
+                  value={formData.applicabilityValue}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      applicabilityValue: value,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.title}>
+                        {category.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {formData.applicabilityType === "product" && (
+              <div className="space-y-2">
+                <Label>Select Product</Label>
+                <Select
+                  value={formData.applicabilityValue}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      applicabilityValue: value,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a product" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

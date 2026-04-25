@@ -29,6 +29,8 @@ export default function Settings() {
     const [loadingBanners, setLoadingBanners] = useState(false);
     const [savingBanners, setSavingBanners] = useState(false);
     const [uploadingBanners, setUploadingBanners] = useState([false, false, false]);
+    const [loadingPaymentSettings, setLoadingPaymentSettings] = useState(false);
+    const [savingPaymentSettings, setSavingPaymentSettings] = useState(false);
 
     // Store Info
     const [store, setStore] = useState({
@@ -69,12 +71,7 @@ export default function Settings() {
     // Payment
     const [payment, setPayment] = useState({
         upiEnabled: true,
-        cardEnabled: true,
-        netBankingEnabled: true,
         codEnabled: true,
-        emiEnabled: true,
-        emiMinAmount: "1000",
-        razorpayKey: "rzp_test_••••••••••••",
     });
 
     // Appearance
@@ -128,6 +125,27 @@ export default function Settings() {
                 });
             })
             .finally(() => setLoadingBanners(false));
+    }, [activeSection]);
+
+    useEffect(() => {
+        if (activeSection !== "payment") return;
+
+        setLoadingPaymentSettings(true);
+        api.adminGetPaymentSettings()
+            .then((settings) => {
+                setPayment({
+                    upiEnabled: settings.upiEnabled,
+                    codEnabled: settings.codEnabled,
+                });
+            })
+            .catch((error) => {
+                toast({
+                    title: "Failed to load payment settings",
+                    description: (error as Error).message,
+                    variant: "destructive",
+                });
+            })
+            .finally(() => setLoadingPaymentSettings(false));
     }, [activeSection]);
 
     const handleSave = (section: string) => {
@@ -515,14 +533,14 @@ export default function Settings() {
                                 <CardTitle className="flex items-center gap-2 text-base"><CreditCard className="w-5 h-5 text-orange-500" /> Payment Settings</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                                {loadingPaymentSettings && (
+                                    <p className="text-sm text-muted-foreground">Loading payment settings...</p>
+                                )}
                                 <div className="space-y-1">
                                     <p className="text-sm font-semibold mb-2">Accepted Payment Methods</p>
                                     {[
                                         { key: "upiEnabled", label: "UPI / QR Code", desc: "PhonePe, Google Pay, Paytm, BHIM" },
-                                        { key: "cardEnabled", label: "Credit / Debit Card", desc: "All major cards accepted" },
-                                        { key: "netBankingEnabled", label: "Net Banking", desc: "All major banks supported" },
                                         { key: "codEnabled", label: "Cash on Delivery", desc: "Pay when order arrives" },
-                                        { key: "emiEnabled", label: "No Cost EMI", desc: "0% EMI on orders above the minimum threshold" },
                                     ].map((item) => (
                                         <div key={item.key} className="flex items-center justify-between py-3 border-b last:border-0">
                                             <div>
@@ -536,19 +554,35 @@ export default function Settings() {
                                         </div>
                                     ))}
                                 </div>
-                                {payment.emiEnabled && (
-                                    <div className="space-y-1.5">
-                                        <Label className="font-semibold">EMI Minimum Order Amount (₹)</Label>
-                                        <Input type="number" value={payment.emiMinAmount} onChange={(e) => setPayment({ ...payment, emiMinAmount: e.target.value })} />
-                                    </div>
-                                )}
-                                <div className="space-y-1.5">
-                                    <Label className="font-semibold">Razorpay API Key</Label>
-                                    <Input value={payment.razorpayKey} onChange={(e) => setPayment({ ...payment, razorpayKey: e.target.value })} className="font-mono text-sm" type="password" />
-                                    <p className="text-xs text-muted-foreground">Your Razorpay key ID from the dashboard</p>
-                                </div>
-                                <Button className="gap-2 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => handleSave("Payment")}>
-                                    <Save className="w-4 h-4" /> Save Changes
+                                <Button
+                                    className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+                                    disabled={loadingPaymentSettings || savingPaymentSettings}
+                                    onClick={async () => {
+                                        setSavingPaymentSettings(true);
+                                        try {
+                                            const updated = await api.adminUpdatePaymentSettings({
+                                                upiEnabled: payment.upiEnabled,
+                                                codEnabled: payment.codEnabled,
+                                            });
+
+                                            setPayment({
+                                                upiEnabled: updated.upiEnabled,
+                                                codEnabled: updated.codEnabled,
+                                            });
+
+                                            toast({ title: "✅ Payment settings saved successfully!" });
+                                        } catch (error) {
+                                            toast({
+                                                title: "Failed to save payment settings",
+                                                description: (error as Error).message,
+                                                variant: "destructive",
+                                            });
+                                        } finally {
+                                            setSavingPaymentSettings(false);
+                                        }
+                                    }}
+                                >
+                                    <Save className="w-4 h-4" /> {savingPaymentSettings ? "Saving..." : "Save Changes"}
                                 </Button>
                             </CardContent>
                         </Card>

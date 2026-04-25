@@ -1,6 +1,25 @@
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const Address = require("../models/Address");
+const PaymentSettings = require("../models/PaymentSettings");
+
+const DEFAULT_PAYMENT_SETTINGS = {
+  upiEnabled: true,
+  codEnabled: true,
+};
+
+const getPublicPaymentSettings = async (req, res) => {
+  const settings = await PaymentSettings.findOne().lean();
+
+  if (!settings) {
+    return res.json(DEFAULT_PAYMENT_SETTINGS);
+  }
+
+  return res.json({
+    upiEnabled: settings.upiEnabled,
+    codEnabled: settings.codEnabled,
+  });
+};
 
 // Direct payment - creates order with paid status
 const processDirectPayment = async (req, res) => {
@@ -57,4 +76,7 @@ const processDirectPayment = async (req, res) => {
   return res.status(201).json({ order, message: "Order placed successfully" });
 };
 
-module.exports = { processDirectPayment };
+module.exports = {
+  processDirectPayment,
+  getPublicPaymentSettings,
+};

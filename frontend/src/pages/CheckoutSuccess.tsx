@@ -24,7 +24,6 @@ type OrderSummary = {
   total: number;
   subtotal: number;
   shipping: number;
-  gst: number;
   discount: number;
   paymentMethod: string;
   address?: {
@@ -123,7 +122,6 @@ const CheckoutSuccess = () => {
             <div style="min-width:240px;">
               <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Subtotal</span><span>₹${orderSummary.subtotal.toLocaleString()}</span></div>
               <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Shipping</span><span>${orderSummary.shipping ? `₹${orderSummary.shipping}` : "Free"}</span></div>
-              <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>GST</span><span>₹${orderSummary.gst.toLocaleString()}</span></div>
               ${orderSummary.discount ? `<div style=\"display:flex; justify-content:space-between; margin-bottom:4px; color:#059669;\"><span>Discount</span><span>-₹${orderSummary.discount.toLocaleString()}</span></div>` : ""}
               <div style="display:flex; justify-content:space-between; font-weight:700; margin-top:8px; border-top:1px solid #e5e7eb; padding-top:8px;">
                 <span>Total</span><span>₹${orderSummary.total.toLocaleString()}</span>

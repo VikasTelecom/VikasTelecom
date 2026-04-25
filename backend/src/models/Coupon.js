@@ -11,6 +11,13 @@ const couponSchema = new mongoose.Schema(
     usageLimit: { type: Number, default: 1000 },
     usedCount: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
+    applicabilityType: {
+      type: String,
+      enum: ["all", "brand", "category", "product"],
+      default: "all",
+    },
+    applicabilityValue: { type: String, trim: true },
+    applicabilityLabel: { type: String, trim: true },
   },
   { timestamps: true }
 );

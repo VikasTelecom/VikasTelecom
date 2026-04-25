@@ -79,7 +79,6 @@ interface ExtendedOrder extends AdminOrder {
   phone?: string;
   paymentMethod?: string;
   shippingCost?: number;
-  gst?: number;
   subtotal?: number;
   trackingNumber?: string;
   courierName?: string;
@@ -147,9 +146,8 @@ export default function Orders() {
           items: order.items || [],
           address: formatShippingAddress(order.shippingAddress)
             || (looksLikeObjectId(order.address || "") ? "Address not available" : (order.address || "")),
-          subtotal: order.subtotal || order.total - (order.shippingCost || 50) - (order.gst || 0),
+          subtotal: order.subtotal || order.total - (order.shippingCost || 50),
           shippingCost: order.shippingCost || 50,
-          gst: order.gst || ((order.total - (order.shippingCost || 50)) * 0.18),
           trackingNumber: order.trackingNumber || "",
           courierName: order.courierName || "",
         })) as ExtendedOrder[];
@@ -178,7 +176,7 @@ export default function Orders() {
       specifications: base.specifications || [],
       availability: base.availability || "In Stock",
       deliveryInfo: base.deliveryInfo || "Free delivery in 2-5 days.",
-      returnPolicy: base.returnPolicy || "7-day replacement policy. Easy returns.",
+      returnPolicy: base.returnPolicy || "Replacement only for defective products within 7 days.",
       reviews: base.reviews || [],
       ratingBreakdown: base.ratingBreakdown || [],
       variants: base.variants || [],
@@ -444,7 +442,6 @@ export default function Orders() {
             <div style=\"min-width:240px;\">
               <div style=\"display:flex; justify-content:space-between; margin-bottom:4px;\"><span>Subtotal</span><span>₹${(order.subtotal || 0).toLocaleString()}</span></div>
               <div style=\"display:flex; justify-content:space-between; margin-bottom:4px;\"><span>Shipping</span><span>₹${(order.shippingCost || 0).toLocaleString()}</span></div>
-              <div style=\"display:flex; justify-content:space-between; margin-bottom:4px;\"><span>GST</span><span>₹${(order.gst || 0).toFixed(2)}</span></div>
               <div style=\"display:flex; justify-content:space-between; font-weight:700; margin-top:8px; border-top:1px solid #e5e7eb; padding-top:8px;\">
                 <span>Total</span><span>₹${order.total.toLocaleString()}</span>
               </div>
@@ -916,10 +913,6 @@ export default function Orders() {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Shipping</span>
                         <span>₹{(selectedOrder.shippingCost || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">GST (18%)</span>
-                        <span>₹{(selectedOrder.gst || 0).toFixed(2)}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between text-lg font-bold">

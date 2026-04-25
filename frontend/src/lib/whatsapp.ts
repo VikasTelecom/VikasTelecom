@@ -1,4 +1,4 @@
-const WHATSAPP_BUSINESS_NUMBER = "919327511512";
+export const WHATSAPP_BUSINESS_NUMBER = "919327511512";
 
 export const buildProductWhatsAppLink = (productName: string) => {
   const safeName = productName?.trim() || "this product";

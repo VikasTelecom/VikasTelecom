@@ -145,7 +145,7 @@ export function getProductDetail(id: string): ProductDetail | undefined {
     availability: "In Stock",
     emi: product.price > 1000 ? `EMI from ₹${Math.round(product.price / 6)}/month` : undefined,
     deliveryInfo: "Free delivery by Feb 20-22. Order within 6 hrs.",
-    returnPolicy: "7-day replacement policy. Easy returns.",
+    returnPolicy: "Replacement only for defective products within 7 days.",
     reviews: sampleReviews,
     ratingBreakdown,
   };

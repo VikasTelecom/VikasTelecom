@@ -1,6 +1,7 @@
 const Product = require("../models/Product");
 const Order = require("../models/Order");
 const User = require("../models/User");
+const PaymentSettings = require("../models/PaymentSettings");
 
 const buildLast7Days = () => {
   const days = [];
@@ -98,4 +99,48 @@ const getAdminAnalytics = async (req, res) => {
   });
 };
 
-module.exports = { getAdminAnalytics };
+const defaultPaymentSettings = {
+  upiEnabled: true,
+  codEnabled: true,
+};
+
+const getPaymentSettings = async (req, res) => {
+  const settings = await PaymentSettings.findOne();
+  if (!settings) {
+    return res.json(defaultPaymentSettings);
+  }
+
+  return res.json({
+    upiEnabled: settings.upiEnabled,
+    codEnabled: settings.codEnabled,
+  });
+};
+
+const updatePaymentSettings = async (req, res) => {
+  const payload = {
+    upiEnabled: Boolean(req.body.upiEnabled),
+    codEnabled: Boolean(req.body.codEnabled),
+  };
+
+  let settings = await PaymentSettings.findOne();
+  if (!settings) {
+    settings = await PaymentSettings.create(payload);
+  } else {
+    Object.assign(settings, payload);
+    await settings.save();
+  }
+
+  return res.json({
+    message: "Payment settings updated",
+    settings: {
+      upiEnabled: settings.upiEnabled,
+      codEnabled: settings.codEnabled,
+    },
+  });
+};
+
+module.exports = {
+  getAdminAnalytics,
+  getPaymentSettings,
+  updatePaymentSettings,
+};

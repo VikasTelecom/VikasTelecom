@@ -12,6 +12,7 @@ const bannerSchema = new mongoose.Schema(
     titles: [{ type: String, trim: true }],
     subtitles: [{ type: String, trim: true }],
     ctas: [{ type: String, trim: true }],
+    textColors: [{ type: String, trim: true }],
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }

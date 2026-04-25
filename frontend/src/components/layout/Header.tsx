@@ -337,7 +337,7 @@ export const Header = () => {
               )}
 
               <button
-                onClick={() => navigate("/cart")}
+                onClick={() => navigate(isAuthenticated ? "/orders" : "/cart")}
                 className="p-2 rounded-full hover:bg-muted transition-colors relative"
                 aria-label="Cart"
               >

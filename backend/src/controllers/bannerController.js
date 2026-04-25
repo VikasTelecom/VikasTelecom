@@ -21,6 +21,7 @@ const DEFAULT_HOME_HERO_SUBTITLES = [
 ];
 
 const DEFAULT_HOME_HERO_CTAS = ["Shop Now", "Explore", "View Collection"];
+const DEFAULT_HOME_HERO_TEXT_COLORS = ["#FFFFFF", "#FFFFFF", "#FFFFFF"];
 
 const sanitizeImages = (images) => {
   if (!Array.isArray(images)) return [];
@@ -38,18 +39,28 @@ const sanitizeTexts = (values) => {
     .slice(0, 10);
 };
 
+const sanitizeColors = (values) => {
+  if (!Array.isArray(values)) return [];
+  return values
+    .map((value) => String(value || "").trim())
+    .filter((value) => /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(value))
+    .slice(0, 10);
+};
+
 const getHomeHeroBanners = async (req, res) => {
   const banner = await Banner.findOne({ key: HOME_HERO_KEY }).lean();
   const images = sanitizeImages(banner?.images);
   const titles = sanitizeTexts(banner?.titles);
   const subtitles = sanitizeTexts(banner?.subtitles);
   const ctas = sanitizeTexts(banner?.ctas);
+  const textColors = sanitizeColors(banner?.textColors);
 
   return res.json({
     images: images.length ? images : DEFAULT_HOME_HERO_IMAGES,
     titles: titles.length ? titles : DEFAULT_HOME_HERO_TITLES,
     subtitles: subtitles.length ? subtitles : DEFAULT_HOME_HERO_SUBTITLES,
     ctas: ctas.length ? ctas : DEFAULT_HOME_HERO_CTAS,
+    textColors: textColors.length ? textColors : DEFAULT_HOME_HERO_TEXT_COLORS,
   });
 };
 
@@ -58,6 +69,7 @@ const updateHomeHeroBanners = async (req, res) => {
   const titles = sanitizeTexts(req.body?.titles);
   const subtitles = sanitizeTexts(req.body?.subtitles);
   const ctas = sanitizeTexts(req.body?.ctas);
+  const textColors = sanitizeColors(req.body?.textColors);
 
   if (!images.length) {
     return res.status(400).json({ message: "At least one banner image is required" });
@@ -76,6 +88,7 @@ const updateHomeHeroBanners = async (req, res) => {
         titles,
         subtitles,
         ctas,
+        textColors: textColors.length ? textColors : DEFAULT_HOME_HERO_TEXT_COLORS,
         updatedBy: req.user?.id,
       },
     },
@@ -93,6 +106,7 @@ const updateHomeHeroBanners = async (req, res) => {
     titles: banner.titles || [],
     subtitles: banner.subtitles || [],
     ctas: banner.ctas || [],
+    textColors: banner.textColors || [],
   });
 };
 
