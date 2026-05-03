@@ -230,7 +230,7 @@ function TabContent({
                 {review.avatar}
               </div>
               <div>
-                <p className="font-medium text-sm text-foreground">{review.user}</p>
+                <p className="font-medium text-sm text-foreground">{review.userName || review.user}</p>
                 <p className="text-xs text-muted-foreground">{review.date}</p>
               </div>
               <div className="ml-auto flex items-center gap-1">

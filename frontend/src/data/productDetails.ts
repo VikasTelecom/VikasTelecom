@@ -23,6 +23,7 @@ export interface ProductDetail extends Product {
 export interface ProductReview {
   id: string;
   user: string;
+  userName?: string;
   avatar: string;
   rating: number;
   date: string;

@@ -5,6 +5,12 @@ import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 
 type UserOrder = {
   _id?: string;
@@ -24,7 +30,7 @@ type UserOrder = {
     postalCode?: string;
     country?: string;
   };
-  items?: { name: string; qty: number; price: number }[];
+  items?: { product?: string; productId?: string; name: string; qty: number; price: number; image?: string }[];
 };
 
 const statusStyles: Record<string, string> = {
@@ -46,6 +52,15 @@ const OrdersPage = () => {
   const [orders, setOrders] = useState<UserOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [rateDialogOpen, setRateDialogOpen] = useState(false);
+  const [rateProductId, setRateProductId] = useState<string>("");
+  const [rateProductName, setRateProductName] = useState<string>("");
+  const [rateValue, setRateValue] = useState<number>(0);
+  const [rateTitle, setRateTitle] = useState<string>("");
+  const [rateComment, setRateComment] = useState<string>("");
+  const [rateSubmitting, setRateSubmitting] = useState(false);
+  const [ratedProductIds, setRatedProductIds] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     if (!isAuthenticated) {
       setLoading(false);
@@ -58,6 +73,39 @@ const OrdersPage = () => {
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   }, [isAuthenticated]);
+
+  const openRateDialog = (productId: string, productName: string) => {
+    setRateProductId(productId);
+    setRateProductName(productName);
+    setRateValue(0);
+    setRateTitle("");
+    setRateComment("");
+    setRateDialogOpen(true);
+  };
+
+  const submitRating = async () => {
+    if (!rateProductId) return;
+    if (rateValue < 1 || rateValue > 5) {
+      toast({ title: "Select a rating", description: "Please choose 1 to 5 stars.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      setRateSubmitting(true);
+      await api.addProductReview(rateProductId, {
+        rating: rateValue,
+        title: rateTitle.trim() || undefined,
+        comment: rateComment.trim() || undefined,
+      });
+      setRatedProductIds((prev) => ({ ...prev, [rateProductId]: true }));
+      toast({ title: "Thanks for your rating!" });
+      setRateDialogOpen(false);
+    } catch (error) {
+      toast({ title: "Failed to submit rating", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setRateSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -105,6 +153,7 @@ const OrdersPage = () => {
                 const orderId = order.id || order._id || "-";
                 const date = order.createdAt ? new Date(order.createdAt) : null;
                 const status = (order.status || "pending").toLowerCase();
+                const isDelivered = status === "delivered";
                 const statusClass = statusStyles[status] || "bg-muted text-foreground";
                 const paymentStatus = (order.paymentStatus || "unpaid").toLowerCase();
                 const paymentStatusClass = paymentStatusStyles[paymentStatus] || "bg-muted text-foreground";
@@ -142,7 +191,25 @@ const OrdersPage = () => {
                               <p className="text-foreground font-medium break-words">{item.name}</p>
                               <p className="text-xs text-muted-foreground mt-1">Qty: {item.qty}</p>
                             </div>
-                            <p className="font-semibold whitespace-nowrap">₹{Number(item.price || 0).toLocaleString("en-IN")}</p>
+                            <div className="flex flex-col items-end gap-2">
+                              <p className="font-semibold whitespace-nowrap">₹{Number(item.price || 0).toLocaleString("en-IN")}</p>
+                              {isDelivered && (() => {
+                                const productId = String(item.productId || item.product || "");
+                                if (!productId) return null;
+                                if (ratedProductIds[productId]) {
+                                  return <span className="text-xs text-muted-foreground">Rated</span>;
+                                }
+                                return (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openRateDialog(productId, item.name)}
+                                  >
+                                    Rate
+                                  </Button>
+                                );
+                              })()}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -170,6 +237,66 @@ const OrdersPage = () => {
           )}
         </div>
       </main>
+
+      <Dialog
+        open={rateDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && !rateSubmitting) setRateDialogOpen(false);
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Rate product</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">{rateProductName}</div>
+
+            <div className="space-y-2">
+              <Label>Rating</Label>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRateValue(value)}
+                    className={`h-9 w-9 rounded-md border border-border text-lg ${
+                      rateValue >= value ? "bg-primary text-primary-foreground" : "bg-background"
+                    }`}
+                    aria-label={`${value} star`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reviewTitle">Title (optional)</Label>
+              <Input id="reviewTitle" value={rateTitle} onChange={(e) => setRateTitle(e.target.value)} placeholder="Short summary" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reviewComment">Comment (optional)</Label>
+              <Textarea
+                id="reviewComment"
+                value={rateComment}
+                onChange={(e) => setRateComment(e.target.value)}
+                placeholder="Share your experience"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setRateDialogOpen(false)} disabled={rateSubmitting}>
+                Cancel
+              </Button>
+              <Button onClick={submitRating} disabled={rateSubmitting}>
+                {rateSubmitting ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

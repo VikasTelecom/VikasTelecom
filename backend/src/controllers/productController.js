@@ -1,6 +1,17 @@
 const mongoose = require("mongoose");
 const Product = require("../models/Product");
+const Order = require("../models/Order");
+const User = require("../models/User");
 const slugify = require("../utils/slugify");
+
+const looksLikeObjectId = (value) => {
+  return Boolean(value && /^[a-f\d]{24}$/i.test(String(value).trim()));
+};
+
+const getInitial = (name) => {
+  const trimmed = String(name || "").trim();
+  return trimmed ? trimmed.slice(0, 1).toUpperCase() : "";
+};
 
 const buildUniqueSlug = async (baseSlug, excludeId) => {
   let slug = baseSlug;
@@ -181,7 +192,29 @@ const getProduct = async (req, res) => {
     return res.status(404).json({ message: "Product not found" });
   }
 
-  return res.json({ product });
+  const plain = product.toObject({ virtuals: false });
+  const reviews = Array.isArray(plain.reviews) ? plain.reviews : [];
+  const missingNames = reviews.filter((review) => !review.userName && looksLikeObjectId(review.user));
+  const userIds = [...new Set(missingNames.map((review) => String(review.user)))]
+    .filter(Boolean);
+
+  let nameById = new Map();
+  if (userIds.length > 0) {
+    const users = await User.find({ _id: { $in: userIds } }).select("name");
+    nameById = new Map(users.map((user) => [String(user._id), user.name]));
+  }
+
+  plain.reviews = reviews.map((review, index) => {
+    const resolvedName = review.userName || nameById.get(String(review.user)) || "";
+    return {
+      ...review,
+      id: review.id || `${String(review.user || "anon")}-${String(review.date || index)}`,
+      userName: resolvedName || undefined,
+      avatar: review.avatar || getInitial(resolvedName) || undefined,
+    };
+  });
+
+  return res.json({ product: plain });
 };
 
 const createProduct = async (req, res) => {
@@ -238,10 +271,85 @@ const deleteProduct = async (req, res) => {
   return res.json({ message: "Product removed" });
 };
 
+const addProductReview = async (req, res) => {
+  const { id } = req.params;
+  const rating = Number(req.body.rating);
+  const title = typeof req.body.title === "string" ? req.body.title.trim() : "";
+  const comment = typeof req.body.comment === "string" ? req.body.comment.trim() : "";
+
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return res.status(400).json({ message: "Rating must be between 1 and 5" });
+  }
+
+  const product = await Product.findById(id);
+  if (!product) {
+    return res.status(404).json({ message: "Product not found" });
+  }
+
+  const userId = String(req.user?._id || "");
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const hasDeliveredOrder = await Order.exists({
+    user: req.user._id,
+    status: "delivered",
+    $or: [
+      { "items.product": product._id },
+      { "items.productId": String(product._id) },
+    ],
+  });
+
+  if (!hasDeliveredOrder) {
+    return res.status(403).json({ message: "You can rate this product only after delivery" });
+  }
+
+  const alreadyReviewed = Array.isArray(product.reviews)
+    ? product.reviews.some((review) => String(review.user) === userId)
+    : false;
+
+  if (alreadyReviewed) {
+    return res.status(409).json({ message: "You have already reviewed this product" });
+  }
+
+  product.reviews = Array.isArray(product.reviews) ? product.reviews : [];
+  product.reviews.push({
+    user: userId,
+    userName: req.user?.name || undefined,
+    avatar: getInitial(req.user?.name) || undefined,
+    rating,
+    date: new Date().toISOString(),
+    title: title || undefined,
+    comment: comment || undefined,
+  });
+
+  const ratings = product.reviews.map((review) => Number(review.rating || 0)).filter((val) => Number.isFinite(val) && val > 0);
+  const reviewCount = ratings.length;
+  const avgRating = reviewCount ? ratings.reduce((sum, val) => sum + val, 0) / reviewCount : 0;
+
+  product.reviewCount = reviewCount;
+  product.rating = Number(avgRating.toFixed(1));
+
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  ratings.forEach((val) => {
+    const rounded = Math.round(val);
+    if (rounded >= 1 && rounded <= 5) counts[rounded] += 1;
+  });
+
+  product.ratingBreakdown = [5, 4, 3, 2, 1].map((stars) => ({
+    stars,
+    count: counts[stars],
+  }));
+
+  await product.save();
+  return res.status(201).json({ product });
+};
+
 module.exports = {
   listProducts,
   getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
+  addProductReview,
 };

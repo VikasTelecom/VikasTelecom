@@ -38,8 +38,9 @@ type ApiProduct = {
   deliveryInfo?: string;
   returnPolicy?: string;
   reviews?: {
-    id: string;
+    id?: string;
     user: string;
+    userName?: string;
     avatar?: string;
     rating: number;
     date?: string;
@@ -100,7 +101,16 @@ type ApiOrder = {
   paymentMethod?: "cod" | "upi" | string;
   upiTransactionId?: string;
   createdAt?: string;
-  items?: { name: string; qty: number; price: number }[];
+  items?: {
+    product?: string;
+    productId?: string;
+    name: string;
+    qty: number;
+    price: number;
+    image?: string;
+    category?: string;
+    variant?: unknown;
+  }[];
   address?: string;
   shippingAddress?: {
     name?: string;
@@ -373,6 +383,13 @@ export const api = {
   },
   fetchProduct: async (idOrSlug: string) => {
     const data = await apiRequest<{ product: ApiProduct }>(`/products/${idOrSlug}`);
+    return normalizeProduct(data.product);
+  },
+  addProductReview: async (productId: string, payload: { rating: number; title?: string; comment?: string }) => {
+    const data = await apiRequest<{ product: ApiProduct }>(`/products/${productId}/reviews`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
     return normalizeProduct(data.product);
   },
   fetchCategories: async () => {

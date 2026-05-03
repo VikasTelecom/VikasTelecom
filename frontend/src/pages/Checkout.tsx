@@ -713,22 +713,6 @@ const Checkout = () => {
                     )}
                     <p className="mt-2 text-xs text-muted-foreground">This QR is generated with your current order total and pays to {UPI_PAYEE_ID}.</p>
                   </div>
-
-                  <div className="rounded-lg border border-border bg-white p-3 space-y-2">
-                    <Label htmlFor="upiTransactionId" className="text-xs text-muted-foreground">UPI Transaction ID</Label>
-                    <Input
-                      id="upiTransactionId"
-                      placeholder="Enter transaction id after payment"
-                      value={upiTransactionId}
-                      onChange={(e) => setUpiTransactionId(e.target.value)}
-                      className="bg-white"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {upiPaymentInitiated
-                        ? "After paying, paste the transaction id and click Pay via UPI again to place the order."
-                        : "Click Pay via UPI to open your UPI app, then come back and paste the transaction id."}
-                    </p>
-                  </div>
                 </div>
               )}
             </div>
@@ -868,6 +852,30 @@ const Checkout = () => {
                     : `Place Order — ₹${finalTotal.toLocaleString("en-IN")}`
                 )}
               </Button>
+
+              {paymentMethod === "upi" && (
+                <div className="mt-3 rounded-xl border border-border bg-white p-3 space-y-2">
+                  <Label htmlFor="upiTransactionId" className="text-xs text-muted-foreground">UPI Transaction ID</Label>
+                  <Input
+                    id="upiTransactionId"
+                    placeholder={upiPaymentInitiated ? "Paste transaction id to place order" : "Transaction id will be entered after payment"}
+                    value={upiTransactionId}
+                    onChange={(e) => setUpiTransactionId(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && upiPaymentInitiated) {
+                        e.preventDefault();
+                        handlePay();
+                      }
+                    }}
+                    className="bg-white"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {upiPaymentInitiated
+                      ? "Paste the transaction id and press Enter / click Place UPI Order."
+                      : "Click Pay via UPI to complete payment first."}
+                  </p>
+                </div>
+              )}
               <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
                 By placing your order, you agree to our privacy policy and terms of sale.
               </div>
