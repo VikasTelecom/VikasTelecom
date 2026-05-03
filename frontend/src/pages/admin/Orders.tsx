@@ -29,6 +29,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -117,6 +127,8 @@ const formatShippingAddress = (shippingAddress?: {
 export default function Orders() {
   const [orders, setOrders] = useState<ExtendedOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<ExtendedOrder | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [orderPendingDelete, setOrderPendingDelete] = useState<ExtendedOrder | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
@@ -358,9 +370,14 @@ export default function Orders() {
     win.print();
   };
 
-  const handleDeleteOrder = async (order: ExtendedOrder) => {
-    const confirmed = window.confirm(`Delete order ${order.id}? This action cannot be undone.`);
-    if (!confirmed) return;
+  const requestDeleteOrder = (order: ExtendedOrder) => {
+    setOrderPendingDelete(order);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteOrder = async () => {
+    const order = orderPendingDelete;
+    if (!order) return;
     try {
       await api.adminDeleteOrder(order.id);
       setOrders((prev) => prev.filter((entry) => entry.id !== order.id));
@@ -368,6 +385,8 @@ export default function Orders() {
         setSelectedOrder(null);
       }
       toast({ title: "Order deleted" });
+      setDeleteDialogOpen(false);
+      setOrderPendingDelete(null);
     } catch (error) {
       toast({ title: "Failed to delete order", description: (error as Error).message, variant: "destructive" });
     }
@@ -677,7 +696,7 @@ export default function Orders() {
                             <Eye className="w-4 h-4 mr-1" />
                             View
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDeleteOrder(order)} className="text-red-600 hover:text-red-700">
+                          <Button size="sm" variant="ghost" onClick={() => requestDeleteOrder(order)} className="text-red-600 hover:text-red-700">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -1114,7 +1133,7 @@ export default function Orders() {
                   <Download className="w-4 h-4 mr-2" />
                   Download PDF
                 </Button>
-                <Button onClick={() => selectedOrder && handleDeleteOrder(selectedOrder)} variant="outline" className="text-red-600 hover:text-red-700">
+                <Button onClick={() => selectedOrder && requestDeleteOrder(selectedOrder)} variant="outline" className="text-red-600 hover:text-red-700">
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Order
                 </Button>
@@ -1141,6 +1160,35 @@ export default function Orders() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setOrderPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete order {orderPendingDelete?.id || ""}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(event) => {
+                event.preventDefault();
+                void handleDeleteOrder();
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={!!productPreview} onOpenChange={(open) => {
         if (!open) {
