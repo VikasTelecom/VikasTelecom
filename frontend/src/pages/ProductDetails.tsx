@@ -7,6 +7,7 @@ import {
   Zap,
   MessageCircle,
   PhoneCall,
+  Share2,
   Minus,
   Plus,
   ChevronRight,
@@ -25,6 +26,7 @@ import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { openProductWhatsApp, WHATSAPP_BUSINESS_NUMBER } from "@/lib/whatsapp";
+import { shareOrCopy } from "@/lib/share";
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -295,6 +297,28 @@ const ProductDetails = () => {
     window.location.href = `tel:+${WHATSAPP_BUSINESS_NUMBER}`;
   };
 
+  const handleShare = async () => {
+    const url = new URL(`/product/${product.slug || product.id}`, window.location.origin).toString();
+    const result = await shareOrCopy({
+      title: product.title,
+      text: product.title,
+      url,
+    });
+
+    if (result === "copied") {
+      toast({
+        title: "Link copied",
+        description: "Product link copied to clipboard.",
+      });
+    } else if (result === "failed") {
+      toast({
+        title: "Unable to share",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -343,9 +367,19 @@ const ProductDetails = () => {
                     {product.brand}
                   </Link>
                   {/* Title */}
-                  <h1 className="text-xl lg:text-3xl xl:text-2xl font text-foreground leading-tight">
-                    {product.title}
-                  </h1>
+                  <div className="flex items-start gap-3">
+                    <h1 className="flex-1 text-xl lg:text-3xl xl:text-2xl font text-foreground leading-tight">
+                      {product.title}
+                    </h1>
+                    <button
+                      type="button"
+                      aria-label="Share product"
+                      onClick={handleShare}
+                      className="shrink-0 mt-0.5 inline-flex items-center justify-center rounded-full bg-muted/40 border border-border p-2 text-foreground/80 hover:text-primary hover:bg-muted transition-colors"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Rating */}

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingCart } from "lucide-react";
+import { Share2, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "@/hooks/use-toast";
+import { shareOrCopy } from "@/lib/share";
 
 const FALLBACK_PRODUCT_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" rx="32" fill="#f4f4f5"/><rect x="56" y="56" width="288" height="288" rx="28" fill="#e4e4e7"/><path d="M104 274l66-76 44 48 30-28 56 56H104z" fill="#c4c4c8"/><circle cx="144" cy="154" r="24" fill="#d4d4d8"/></svg>'
@@ -20,6 +22,31 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const [hasImageError, setHasImageError] = useState(false);
   const { addToCart } = useCart();
   const isMobile = useIsMobile();
+
+  const handleShare = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const url = new URL(`/product/${product.slug || product.id}`, window.location.origin).toString();
+    const result = await shareOrCopy({
+      title: product.title,
+      text: product.title,
+      url,
+    });
+
+    if (result === "copied") {
+      toast({
+        title: "Link copied",
+        description: "Product link copied to clipboard.",
+      });
+    } else if (result === "failed") {
+      toast({
+        title: "Unable to share",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     setHasImageError(false);
@@ -48,6 +75,14 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     >
       {/* Image */}
       <Link to={`/product/${product.id}`} className="relative aspect-square overflow-hidden bg-muted/30 block flex-shrink-0">
+        <button
+          type="button"
+          aria-label="Share product"
+          onClick={handleShare}
+          className="absolute top-3 right-3 z-20 inline-flex items-center justify-center rounded-full bg-background/80 backdrop-blur border border-border p-2 text-foreground/80 hover:text-primary hover:bg-background transition-colors"
+        >
+          <Share2 className="w-4 h-4" />
+        </button>
         <img
           src={imageSrc}
           alt={product.title}
