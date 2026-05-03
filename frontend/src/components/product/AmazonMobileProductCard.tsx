@@ -29,6 +29,12 @@ export function AmazonMobileProductCard({
 }) {
   const { addToCart } = useCart();
 
+  const isOutOfStock =
+    product.status === "out_of_stock" ||
+    product.inStock === false ||
+    product.availability === "Out of Stock" ||
+    (typeof product.stock === "number" ? product.stock <= 0 : false);
+
   const handleShare = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -70,7 +76,7 @@ export function AmazonMobileProductCard({
             type="button"
             aria-label="Share product"
             onClick={handleShare}
-            className="absolute top-2 right-2 z-20 inline-flex items-center justify-center rounded-full bg-background/80 backdrop-blur border border-border p-2 text-foreground/80 hover:text-primary hover:bg-background transition-colors"
+            className="absolute top-2 right-2 z-20 inline-flex items-center justify-center rounded-full bg-background/80 backdrop-blur border border-border p-2 text-foreground/80 hover:text-primary hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95"
           >
             <Share2 className="w-4 h-4" />
           </button>
@@ -115,10 +121,14 @@ export function AmazonMobileProductCard({
       <div className="px-3 pb-3">
         <button
           type="button"
-          onClick={() => addToCart(product)}
-          className="w-full rounded-full py-2.5 text-[14px] font-bold text-black bg-[hsl(var(--cta-yellow))] hover:bg-[hsl(var(--cta-yellow-hover))] transition-colors"
+          onClick={() => {
+            if (isOutOfStock) return;
+            addToCart(product);
+          }}
+          disabled={isOutOfStock}
+          className="w-full rounded-full py-2.5 text-[14px] font-bold text-black bg-[hsl(var(--cta-yellow))] hover:bg-[hsl(var(--cta-yellow-hover))] transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[hsl(var(--cta-yellow))]"
         >
-          Add to Cart
+          {isOutOfStock ? "Out of Stock" : "Add to Cart"}
         </button>
       </div>
     </div>

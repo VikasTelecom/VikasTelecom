@@ -23,6 +23,12 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const { addToCart } = useCart();
   const isMobile = useIsMobile();
 
+  const isOutOfStock =
+    product.status === "out_of_stock" ||
+    product.inStock === false ||
+    product.availability === "Out of Stock" ||
+    (typeof product.stock === "number" ? product.stock <= 0 : false);
+
   const handleShare = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -79,7 +85,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           type="button"
           aria-label="Share product"
           onClick={handleShare}
-          className="absolute top-3 right-3 z-20 inline-flex items-center justify-center rounded-full bg-background/80 backdrop-blur border border-border p-2 text-foreground/80 hover:text-primary hover:bg-background transition-colors"
+          className="absolute top-3 right-3 z-20 inline-flex items-center justify-center rounded-full bg-background/80 backdrop-blur border border-border p-2 text-foreground/80 hover:text-primary hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95 md:opacity-0 md:group-hover:opacity-100"
         >
           <Share2 className="w-4 h-4" />
         </button>
@@ -127,15 +133,17 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  if (isOutOfStock) return;
                   addToCart(product);
                 }}
+                disabled={isOutOfStock}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.08 }}
-                className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg"
+                className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
               >
                 <ShoppingCart className="w-4 h-4" />
-                Add to Cart
+                {isOutOfStock ? "Out of Stock" : "Add to Cart"}
               </motion.button>
             </div>
           </motion.div>
@@ -173,11 +181,15 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           <div className="mt-3">
             <button
               type="button"
-              onClick={() => addToCart(product)}
-              className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2"
+              onClick={() => {
+                if (isOutOfStock) return;
+                addToCart(product);
+              }}
+              disabled={isOutOfStock}
+              className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <ShoppingCart className="w-4 h-4" />
-              Add to Cart
+              {isOutOfStock ? "Out of Stock" : "Add to Cart"}
             </button>
           </div>
         )}

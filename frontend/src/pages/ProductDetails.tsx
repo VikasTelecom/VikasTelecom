@@ -193,6 +193,8 @@ const ProductDetails = () => {
       ? "Limited Stock"
       : "In Stock";
 
+  const canPurchase = currentAvailability !== "Out of Stock";
+
   // Get unique colors and storage options from variants that admin added
   const availableColors = product.variants
     ? [
@@ -660,10 +662,11 @@ const ProductDetails = () => {
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={handleAddToCart}
-                        className="flex-1 py-3 bg-primary text-primary-foreground font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-primary-hover transition-colors shadow-md"
+                        disabled={!canPurchase}
+                        className="flex-1 py-3 bg-primary text-primary-foreground font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-primary-hover transition-colors shadow-md disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        Add to Cart
+                        {canPurchase ? "Add to Cart" : "Out of Stock"}
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.95 }}
@@ -677,7 +680,8 @@ const ProductDetails = () => {
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={handleBuyNow}
-                      className="w-full py-3 bg-foreground text-background font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-foreground/90 transition-colors shadow-md"
+                      disabled={!canPurchase}
+                      className="w-full py-3 bg-foreground text-background font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-foreground/90 transition-colors shadow-md disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-foreground"
                     >
                       <Zap className="w-4 h-4" />
                       Buy Now
@@ -696,15 +700,17 @@ const ProductDetails = () => {
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={handleAddToCart}
-                      className="py-3 bg-primary text-primary-foreground font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-primary-hover transition-colors shadow-md"
+                      disabled={!canPurchase}
+                      className="py-3 bg-primary text-primary-foreground font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-primary-hover transition-colors shadow-md disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
                     >
                       <ShoppingCart className="w-4 h-4" />
-                      Add to Cart
+                      {canPurchase ? "Add to Cart" : "Out of Stock"}
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={handleBuyNow}
-                      className="py-3 bg-foreground text-background font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-foreground/90 transition-colors shadow-md"
+                      disabled={!canPurchase}
+                      className="py-3 bg-foreground text-background font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-foreground/90 transition-colors shadow-md disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-foreground"
                     >
                       <Zap className="w-4 h-4" />
                       Buy Now
@@ -762,9 +768,10 @@ const ProductDetails = () => {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleAddToCart}
-            className="px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg text-xs shadow-md"
+            disabled={!canPurchase}
+            className="px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg text-xs shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Add to Cart
+            {canPurchase ? "Add to Cart" : "Out of Stock"}
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.95 }}

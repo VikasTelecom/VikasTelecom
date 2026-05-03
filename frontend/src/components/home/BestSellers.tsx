@@ -41,7 +41,7 @@ const ProductSlider = ({ title, subtitle, products, loading, id }: ProductSlider
         </div>
         <div
           ref={scrollRef}
-          className="flex gap-4 lg:gap-6 overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory"
+          className="flex gap-4 lg:gap-6 overflow-x-auto scrollbar-hide pt-2 pb-4 snap-x snap-mandatory"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {loading

@@ -63,6 +63,14 @@ export const MobileMenu = ({ onClose }: MobileMenuProps) => {
     loadBrands();
   }, []);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -202,6 +210,7 @@ export const MobileMenu = ({ onClose }: MobileMenuProps) => {
                     onChange={(e) => setBrandQuery(e.target.value)}
                     placeholder="Search brands"
                     className="pl-9"
+                    autoFocus
                   />
                 </div>
 

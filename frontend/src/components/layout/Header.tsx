@@ -178,58 +178,71 @@ export const Header = () => {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
-            ? "bg-background/95 backdrop-blur-md shadow-header"
-            : "bg-background"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-background bg-gradient-to-b to-background border-b border-border ${
+          isScrolled ? "from-primary/25 shadow-header" : "from-primary/20"
         }`}
       >
         <div className="container-main">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+          <div className="flex items-center justify-between h-14 lg:h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <img
                 src="/android-chrome-192x192.png"
                 alt="VikasTelecom"
-                className="h-10 w-10 object-contain"
+                className="h-9 w-9 object-contain"
               />
-              <span className="font-bold text-xl tracking-tight text-foreground">
+              <span className="font-bold text-xl sm:text-2xl tracking-tight text-foreground">
                 Vikas<span className="text-primary">Telecom</span>
               </span>
             </Link>
 
             {/* Desktop Nav */}
             <nav className="hidden lg:flex items-center gap-8">
-              {navLinks.map((link: any) => (
-                <div key={link.label} className="relative">
-                  {link.hasMega ? (
-                    <button
-                      onClick={link.type === "brands" ? handleBrandsClick : handleClick}
-                      onMouseEnter={link.type === "brands" ? handleBrandsMouseEnter : handleMouseEnter}
-                      onMouseLeave={link.type === "brands" ? handleBrandsMouseLeave : handleMouseLeave}
-                      className="flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-primary transition-colors py-2"
-                    >
-                      {link.label}
-                      <ChevronDown className={`w-4 h-4 transition-transform ${(link.type === "brands" ? isBrandsMegaOpen : isMegaMenuOpen) ? "rotate-180" : ""}`} />
-                    </button>
-                  ) : link.isScroll ? (
-                    <a
-                      href={link.href}
-                      onClick={handleScrollToFooter}
-                      className="flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-primary transition-colors py-2"
-                    >
-                      {link.label}
-                    </a>
-                  ) : (
-                    <a
-                      href={link.href}
-                      className="flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-primary transition-colors py-2"
-                    >
-                      {link.label}
-                    </a>
-                  )}
-                </div>
-              ))}
+              {navLinks.map((link: any) => {
+                const isActiveMega =
+                  link.hasMega &&
+                  (link.type === "brands"
+                    ? isBrandsMegaOpen && isBrandsMegaLocked
+                    : isMegaMenuOpen && isMegaMenuLocked);
+
+                return (
+                  <div key={link.label} className="relative">
+                    {link.hasMega ? (
+                      <button
+                        onClick={link.type === "brands" ? handleBrandsClick : handleClick}
+                        onMouseEnter={link.type === "brands" ? handleBrandsMouseEnter : handleMouseEnter}
+                        onMouseLeave={link.type === "brands" ? handleBrandsMouseLeave : handleMouseLeave}
+                        className={
+                          "flex items-center gap-1 text-base font-medium transition-colors py-2 " +
+                          (isActiveMega
+                            ? "text-primary"
+                            : "text-foreground/80 hover:text-primary")
+                        }
+                      >
+                        {link.label}
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform ${(link.type === "brands" ? isBrandsMegaOpen : isMegaMenuOpen) ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                    ) : link.isScroll ? (
+                      <a
+                        href={link.href}
+                        onClick={handleScrollToFooter}
+                        className="flex items-center gap-1 text-base font-medium text-foreground/80 hover:text-primary transition-colors py-2"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="flex items-center gap-1 text-base font-medium text-foreground/80 hover:text-primary transition-colors py-2"
+                      >
+                        {link.label}
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
             </nav>
 
             {/* Actions */}
@@ -405,7 +418,7 @@ export const Header = () => {
       </AnimatePresence>
 
       {/* Spacer */}
-      <div className="h-16 lg:h-20" />
+      <div className="h-14 lg:h-16" />
     </>
   );
 };

@@ -35,6 +35,14 @@ export const MobileCategoriesPanel = ({ onClose }: Props) => {
     if (query.trim().length > 0) setExpanded(null);
   }, [query]);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const toggle = async (categorySlug: string, title: string) => {
     if (expanded === title) {
       setExpanded(null);
@@ -84,6 +92,7 @@ export const MobileCategoriesPanel = ({ onClose }: Props) => {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search categories"
             className="pl-9"
+            autoFocus
           />
         </div>
       </div>

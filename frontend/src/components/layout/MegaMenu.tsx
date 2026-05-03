@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCategories } from "@/contexts/CategoriesContext";
 import { Input } from "@/components/ui/input";
 
@@ -23,6 +23,14 @@ export const MegaMenu = ({ onClose }: MegaMenuProps) => {
       return title.includes(q) || slug.includes(q);
     });
   }, [categories, query]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   return (
     <motion.div
@@ -50,6 +58,7 @@ export const MegaMenu = ({ onClose }: MegaMenuProps) => {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search categories"
           className="pl-9"
+          autoFocus
         />
       </div>
 

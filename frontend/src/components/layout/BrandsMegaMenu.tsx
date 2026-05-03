@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Search, X } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 
@@ -34,6 +34,14 @@ export const BrandsMegaMenu = ({ onClose }: BrandsMegaMenuProps) => {
       return name.includes(q) || slug.includes(q);
     });
   }, [brands, query]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   useEffect(() => {
     const loadBrands = async () => {
@@ -76,6 +84,7 @@ export const BrandsMegaMenu = ({ onClose }: BrandsMegaMenuProps) => {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search brands"
           className="pl-9"
+          autoFocus
         />
       </div>
       

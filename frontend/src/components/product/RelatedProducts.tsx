@@ -39,7 +39,7 @@ export const RelatedProducts = ({ products }: RelatedProductsProps) => {
       </div>
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory"
+        className="flex gap-4 overflow-x-auto scrollbar-hide pt-2 pb-4 snap-x snap-mandatory"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {products.map((product, i) => (
