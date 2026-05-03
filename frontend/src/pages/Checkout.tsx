@@ -834,10 +834,6 @@ const Checkout = () => {
                   <p className="text-muted-foreground">Estimated delivery by {estimatedDelivery}</p>
                 </div>
               </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
-                I agree to the terms and conditions
-              </label>
             </div>
 
             <div className="border border-border rounded-2xl p-5 sm:p-6 bg-white">
@@ -942,6 +938,16 @@ const Checkout = () => {
                 )}
               </Button>
 
+              <label className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                />
+                <span>I agree to the terms and conditions</span>
+              </label>
+
               {paymentMethod === "upi" && upiPaymentInitiated && (
                 <div className="mt-3 rounded-xl border border-border bg-white p-3 space-y-2">
                   <Label htmlFor="upiTransactionId" className="text-xs text-muted-foreground">UPI Transaction ID</Label>
@@ -1001,6 +1007,16 @@ const Checkout = () => {
                 : "Place Order"}
           </Button>
         </div>
+
+        <label className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+          />
+          <span>I agree to the terms and conditions</span>
+        </label>
 
         {paymentMethod === "upi" && upiPaymentInitiated && (
           <div className="mt-3 rounded-xl border border-border bg-white p-3 space-y-2">
