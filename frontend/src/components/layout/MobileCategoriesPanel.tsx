@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, ChevronDown, ChevronUp, Loader2, Package } from "lucide-react";
+import { X, ChevronDown, ChevronUp, Loader2, Package, Search } from "lucide-react";
 import { useCategories } from "@/contexts/CategoriesContext";
 import { api } from "@/lib/api";
 import type { Product } from "@/data/products";
+import { Input } from "@/components/ui/input";
 
 const fallbackImage = "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=80&h=80&fit=crop";
 
@@ -16,8 +17,23 @@ export const MobileCategoriesPanel = ({ onClose }: Props) => {
   const { categories: allCategories, loading } = useCategories();
   const categories = allCategories.filter((cat) => cat.status !== "inactive");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const [categoryProducts, setCategoryProducts] = useState<Record<string, Product[]>>({});
   const [loadingProducts, setLoadingProducts] = useState<Record<string, boolean>>({});
+
+  const filteredCategories = (() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((c) => {
+      const title = String(c.title || "").toLowerCase();
+      const slug = String(c.slug || "").toLowerCase();
+      return title.includes(q) || slug.includes(q);
+    });
+  })();
+
+  useEffect(() => {
+    if (query.trim().length > 0) setExpanded(null);
+  }, [query]);
 
   const toggle = async (categorySlug: string, title: string) => {
     if (expanded === title) {
@@ -60,14 +76,26 @@ export const MobileCategoriesPanel = ({ onClose }: Props) => {
         </button>
       </div>
 
+      <div className="px-5 py-4 border-b border-border">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search categories"
+            className="pl-9"
+          />
+        </div>
+      </div>
+
       {/* Category List */}
       <div className="divide-y divide-border">
-        {categories.length === 0 && !loading ? (
+        {filteredCategories.length === 0 && !loading ? (
           <div className="px-5 py-8 text-center text-muted-foreground">
-            No categories available
+            {query.trim().length > 0 ? "No categories found" : "No categories available"}
           </div>
         ) : (
-          categories.map((cat) => (
+          filteredCategories.map((cat) => (
             <div key={cat.id}>
               <button
                 onClick={() => toggle(cat.slug, cat.title)}

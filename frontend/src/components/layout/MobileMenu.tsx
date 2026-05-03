@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
-import { ChevronRight, ChevronDown, ChevronUp, Loader2, User, Package, LogOut } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronUp, Loader2, User, Package, LogOut, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCategories } from "@/contexts/CategoriesContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { Input } from "@/components/ui/input";
 
 interface MobileMenuProps {
   onClose: () => void;
@@ -27,6 +28,17 @@ export const MobileMenu = ({ onClose }: MobileMenuProps) => {
   const [brandsLoading, setBrandsLoading] = useState(true);
   const [brandsOpen, setBrandsOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [brandQuery, setBrandQuery] = useState("");
+
+  const filteredBrands = useMemo(() => {
+    const q = brandQuery.trim().toLowerCase();
+    if (!q) return brands;
+    return brands.filter((b) => {
+      const name = String(b.name || "").toLowerCase();
+      const slug = String(b.slug || "").toLowerCase();
+      return name.includes(q) || slug.includes(q);
+    });
+  }, [brandQuery, brands]);
 
   const handleScrollToFooter = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -183,10 +195,22 @@ export const MobileMenu = ({ onClose }: MobileMenuProps) => {
 
             {brandsOpen && (
               <>
-                {brands.length === 0 && !brandsLoading ? (
-                  <p className="text-sm text-muted-foreground">No brands available</p>
+                <div className="relative mb-3">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={brandQuery}
+                    onChange={(e) => setBrandQuery(e.target.value)}
+                    placeholder="Search brands"
+                    className="pl-9"
+                  />
+                </div>
+
+                {filteredBrands.length === 0 && !brandsLoading ? (
+                  <p className="text-sm text-muted-foreground">
+                    {brandQuery.trim().length > 0 ? "No brands found" : "No brands available"}
+                  </p>
                 ) : (
-                  brands.map((brand) => (
+                  filteredBrands.map((brand) => (
                     <Link
                       key={brand.id || brand._id}
                       to={`/brands/${brand.slug}`}

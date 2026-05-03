@@ -45,7 +45,9 @@ const MobileAccessoriesCategory = () => {
           brand: product.brand || "",
           type: (product.type || "Charger") as MobileAccessoryProduct["type"],
           compatibility: product.compatibility || "Universal",
-          inStock: product.inStock ?? (product.stock ? product.stock > 0 : true),
+          inStock:
+            product.inStock ??
+            (typeof product.stock === "number" ? product.stock > 0 : true),
         })) as MobileAccessoryProduct[];
         setItems(mapped);
       })

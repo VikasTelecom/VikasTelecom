@@ -173,9 +173,25 @@ const ProductDetails = () => {
     .filter((img): img is string => typeof img === "string")
     .map((img) => img.trim())
     .filter((img) => img.length > 0);
-  const currentStock =
-    selectedVariant?.stock !== undefined ? selectedVariant.stock : 100; // Default to available
-  const currentAvailability = currentStock > 0 ? "In Stock" : "Out of Stock";
+  const variantStatus = selectedVariant?.status as string | undefined;
+  const productStatus = product.status as string | undefined;
+  const variantStock = typeof selectedVariant?.stock === "number" ? selectedVariant.stock : undefined;
+  const productStock = typeof product.stock === "number" ? product.stock : undefined;
+
+  const currentStock = variantStock ?? productStock;
+
+  const isOutOfStock =
+    variantStatus === "out_of_stock" ||
+    productStatus === "out_of_stock" ||
+    (typeof currentStock === "number" ? currentStock <= 0 : false) ||
+    (typeof product.inStock === "boolean" ? product.inStock === false : false) ||
+    product.availability === "Out of Stock";
+
+  const currentAvailability: "In Stock" | "Out of Stock" | "Limited Stock" = isOutOfStock
+    ? "Out of Stock"
+    : product.availability === "Limited Stock"
+      ? "Limited Stock"
+      : "In Stock";
 
   // Get unique colors and storage options from variants that admin added
   const availableColors = product.variants

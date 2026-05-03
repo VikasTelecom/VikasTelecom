@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useCategories } from "@/contexts/CategoriesContext";
+import { Input } from "@/components/ui/input";
 
 interface MegaMenuProps {
   onClose: () => void;
@@ -10,6 +12,17 @@ interface MegaMenuProps {
 export const MegaMenu = ({ onClose }: MegaMenuProps) => {
   const { categories: allCategories } = useCategories();
   const categories = allCategories.filter((category) => category.status !== "inactive");
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((c) => {
+      const title = String(c.title || "").toLowerCase();
+      const slug = String(c.slug || "").toLowerCase();
+      return title.includes(q) || slug.includes(q);
+    });
+  }, [categories, query]);
 
   return (
     <motion.div
@@ -29,11 +42,27 @@ export const MegaMenu = ({ onClose }: MegaMenuProps) => {
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
+
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search categories"
+          className="pl-9"
+        />
+      </div>
+
       <div
         className="grid gap-6"
         style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
       >
-        {categories.map((category) => (
+        {filtered.length === 0 ? (
+          <div className="col-span-full text-sm text-muted-foreground text-center py-6">
+            No categories found
+          </div>
+        ) : (
+          filtered.map((category) => (
           <Link
             key={category.id}
             to={`/categories/${category.slug}`}
@@ -47,7 +76,8 @@ export const MegaMenu = ({ onClose }: MegaMenuProps) => {
               {category.productCount} products
             </p>
           </Link>
-        ))}
+          ))
+        )}
       </div>
       <div className="mt-6 pt-4 border-t border-border text-center">
         <p className="text-xs text-muted-foreground">

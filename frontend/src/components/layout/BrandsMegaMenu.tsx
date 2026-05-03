@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, X } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
 import { api } from "@/lib/api";
+import { Input } from "@/components/ui/input";
 
 interface BrandsMegaMenuProps {
   onClose: () => void;
@@ -22,6 +23,17 @@ interface Brand {
 export const BrandsMegaMenu = ({ onClose }: BrandsMegaMenuProps) => {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return brands;
+    return brands.filter((b) => {
+      const name = String(b.name || "").toLowerCase();
+      const slug = String(b.slug || "").toLowerCase();
+      return name.includes(q) || slug.includes(q);
+    });
+  }, [brands, query]);
 
   useEffect(() => {
     const loadBrands = async () => {
@@ -56,21 +68,33 @@ export const BrandsMegaMenu = ({ onClose }: BrandsMegaMenuProps) => {
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
+
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search brands"
+          className="pl-9"
+        />
+      </div>
       
       {loading ? (
         <div className="flex items-center justify-center py-8">
           <p className="text-sm text-muted-foreground">Loading brands...</p>
         </div>
-      ) : brands.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <p className="text-sm text-muted-foreground">No brands available</p>
+          <p className="text-sm text-muted-foreground">
+            {query.trim().length > 0 ? "No brands found" : "No brands available"}
+          </p>
         </div>
       ) : (
         <div
           className="grid gap-6"
           style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
         >
-          {brands.map((brand) => (
+          {filtered.map((brand) => (
             <Link
               key={brand.id || brand._id}
               to={`/brands/${brand.slug}`}
