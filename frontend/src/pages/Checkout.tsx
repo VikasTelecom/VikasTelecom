@@ -44,6 +44,12 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("upi");
   const [upiTransactionId, setUpiTransactionId] = useState("");
   const [upiPaymentInitiated, setUpiPaymentInitiated] = useState(false);
+
+  const normalizeUpiTransactionId = (value: string) => {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  };
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -439,11 +445,20 @@ const Checkout = () => {
       return;
     }
 
-    const txId = upiTransactionId.trim();
+    const txId = normalizeUpiTransactionId(upiTransactionId);
     if (!txId) {
       toast({
         title: "Enter transaction id",
         description: "After payment, paste the UPI transaction id here.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/^[a-z0-9]{13,}$/.test(txId)) {
+      toast({
+        title: "Invalid transaction id",
+        description: "Transaction id must be letters/numbers only and at least 13 characters.",
         variant: "destructive",
       });
       return;
@@ -508,7 +523,7 @@ const Checkout = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <CartDrawer />
-      <main className="container-main py-8 lg:py-12">
+      <main className="container-main pt-8 pb-32 lg:py-12">
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-foreground">Home</Link>
           <span>/</span>
@@ -925,50 +940,52 @@ const Checkout = () => {
                   {couponApplied ? "Applied" : "Apply"}
                 </Button>
               </div>
-              <Button size="lg" onClick={handlePay} disabled={loading || items.length === 0} className="w-full mt-4 bg-primary hover:bg-primary/90">
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Processing...
-                  </span>
-                ) : (
-                  paymentMethod === "upi"
-                    ? `Pay via UPI — ₹${finalTotal.toLocaleString("en-IN")}`
-                    : `Place Order — ₹${finalTotal.toLocaleString("en-IN")}`
-                )}
-              </Button>
+              <div className="hidden lg:block">
+                <Button size="lg" onClick={handlePay} disabled={loading || items.length === 0} className="w-full mt-4 bg-primary hover:bg-primary/90">
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Processing...
+                    </span>
+                  ) : (
+                    paymentMethod === "upi"
+                      ? `Pay via UPI — ₹${finalTotal.toLocaleString("en-IN")}`
+                      : `Place Order — ₹${finalTotal.toLocaleString("en-IN")}`
+                  )}
+                </Button>
 
-              <label className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={termsAccepted}
-                  onChange={(e) => setTermsAccepted(e.target.checked)}
-                />
-                <span>I agree to the terms and conditions</span>
-              </label>
-
-              {paymentMethod === "upi" && upiPaymentInitiated && (
-                <div className="mt-3 rounded-xl border border-border bg-white p-3 space-y-2">
-                  <Label htmlFor="upiTransactionId" className="text-xs text-muted-foreground">UPI Transaction ID</Label>
-                  <Input
-                    id="upiTransactionId"
-                    placeholder="Paste transaction id after payment"
-                    value={upiTransactionId}
-                    onChange={(e) => setUpiTransactionId(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleSubmitUpiTransaction();
-                      }
-                    }}
-                    className="bg-white"
+                <label className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
                   />
-                  <Button type="button" onClick={handleSubmitUpiTransaction} disabled={loading} className="w-full">
-                    Submit Transaction ID
-                  </Button>
-                </div>
-              )}
+                  <span>I agree to the terms and conditions</span>
+                </label>
+
+                {paymentMethod === "upi" && upiPaymentInitiated && (
+                  <div className="mt-3 rounded-xl border border-border bg-white p-3 space-y-2">
+                    <Label htmlFor="upiTransactionId" className="text-xs text-muted-foreground">UPI Transaction ID</Label>
+                    <Input
+                      id="upiTransactionId"
+                      placeholder="Paste transaction id after payment"
+                      value={upiTransactionId}
+                      onChange={(e) => setUpiTransactionId(normalizeUpiTransactionId(e.target.value))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSubmitUpiTransaction();
+                        }
+                      }}
+                      className="bg-white"
+                    />
+                    <Button type="button" onClick={handleSubmitUpiTransaction} disabled={loading} className="w-full">
+                      Submit Transaction ID
+                    </Button>
+                  </div>
+                )}
+              </div>
               <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
                 By placing your order, you agree to our privacy policy and terms of sale.
               </div>
@@ -993,7 +1010,7 @@ const Checkout = () => {
           </aside>
         </div>
       </main>
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-border bg-white p-4 shadow-lg">
+      <div className="lg:hidden fixed bottom-14 left-0 right-0 z-40 border-t border-border bg-white p-4 shadow-lg">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs text-muted-foreground">Total payable</p>
@@ -1025,7 +1042,7 @@ const Checkout = () => {
               id="upiTransactionIdMobile"
               placeholder="Paste transaction id after payment"
               value={upiTransactionId}
-              onChange={(e) => setUpiTransactionId(e.target.value)}
+              onChange={(e) => setUpiTransactionId(normalizeUpiTransactionId(e.target.value))}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
