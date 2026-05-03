@@ -344,19 +344,16 @@ const Checkout = () => {
           window.location.href = upiQrPayload;
           toast({
             title: "Redirecting to UPI app...",
-            description: `Complete payment, then enter the transaction id to place the order.`,
+            description: "Complete payment, then submit the transaction id below to place the order.",
           });
           return;
         }
 
-        if (!upiTransactionId.trim()) {
-          toast({
-            title: "Enter transaction id",
-            description: "After completing the UPI payment, paste the transaction id here to place the order.",
-            variant: "destructive",
-          });
-          return;
-        }
+        toast({
+          title: "Submit transaction id",
+          description: "Paste the UPI transaction id below and tap Submit to place the order.",
+        });
+        return;
       }
 
       const orderPayload = {
@@ -402,6 +399,100 @@ const Checkout = () => {
         setUpiPaymentInitiated(false);
         setUpiTransactionId("");
       }
+
+      toast({ title: "Order placed successfully!" });
+      clearCart();
+      setTimeout(() => navigate("/checkout/success"), 500);
+    } catch (error) {
+      toast({ title: "Order failed", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitUpiTransaction = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    if (!selectedAddressId) {
+      toast({ title: "Select a shipping address", variant: "destructive" });
+      return;
+    }
+    if (!termsAccepted) {
+      toast({ title: "Accept the terms to continue", variant: "destructive" });
+      return;
+    }
+    if (items.length === 0) {
+      toast({ title: "Cart is empty", variant: "destructive" });
+      return;
+    }
+    if (paymentMethod !== "upi") {
+      return;
+    }
+    if (!upiPaymentInitiated) {
+      toast({
+        title: "Pay first",
+        description: "Tap Pay via UPI to complete payment first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const txId = upiTransactionId.trim();
+    if (!txId) {
+      toast({
+        title: "Enter transaction id",
+        description: "After payment, paste the UPI transaction id here.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const orderPayload = {
+        items: items.map((item) => ({
+          product: item.product.id,
+          productId: item.product.id,
+          name: item.product.title,
+          category: item.product.category,
+          qty: item.quantity,
+          price: item.variant?.price ?? item.product.price,
+          image: item.product.image,
+          variant: item.variant,
+        })),
+        couponCode: couponApplied ? couponCode : undefined,
+        discount: couponDiscount,
+        total: finalTotal,
+        address: selectedAddressId,
+        paymentMethod,
+        upiTransactionId: txId,
+      };
+
+      const created = await api.createOrder(orderPayload);
+      const address = addresses.find((entry) => entry._id === selectedAddressId);
+      const summary = {
+        id: (created as { id?: string; _id?: string }).id || (created as { id?: string; _id?: string })._id || "",
+        items: orderPayload.items,
+        total: finalTotal,
+        subtotal,
+        shipping,
+        discount: couponDiscount,
+        paymentMethod,
+        address,
+        placedAt: new Date().toISOString(),
+      };
+      localStorage.setItem("last_order", JSON.stringify(summary));
+
+      try {
+        localStorage.removeItem(UPI_INITIATED_KEY);
+        localStorage.removeItem(UPI_REF_KEY);
+      } catch {
+        // ignore
+      }
+      setUpiPaymentInitiated(false);
+      setUpiTransactionId("");
 
       toast({ title: "Order placed successfully!" });
       clearCart();
@@ -846,34 +937,30 @@ const Checkout = () => {
                   </span>
                 ) : (
                   paymentMethod === "upi"
-                    ? (upiPaymentInitiated
-                      ? `Place UPI Order — ₹${finalTotal.toLocaleString("en-IN")}`
-                      : `Pay via UPI — ₹${finalTotal.toLocaleString("en-IN")}`)
+                    ? `Pay via UPI — ₹${finalTotal.toLocaleString("en-IN")}`
                     : `Place Order — ₹${finalTotal.toLocaleString("en-IN")}`
                 )}
               </Button>
 
-              {paymentMethod === "upi" && (
+              {paymentMethod === "upi" && upiPaymentInitiated && (
                 <div className="mt-3 rounded-xl border border-border bg-white p-3 space-y-2">
                   <Label htmlFor="upiTransactionId" className="text-xs text-muted-foreground">UPI Transaction ID</Label>
                   <Input
                     id="upiTransactionId"
-                    placeholder={upiPaymentInitiated ? "Paste transaction id to place order" : "Transaction id will be entered after payment"}
+                    placeholder="Paste transaction id after payment"
                     value={upiTransactionId}
                     onChange={(e) => setUpiTransactionId(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && upiPaymentInitiated) {
+                      if (e.key === "Enter") {
                         e.preventDefault();
-                        handlePay();
+                        handleSubmitUpiTransaction();
                       }
                     }}
                     className="bg-white"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {upiPaymentInitiated
-                      ? "Paste the transaction id and press Enter / click Place UPI Order."
-                      : "Click Pay via UPI to complete payment first."}
-                  </p>
+                  <Button type="button" onClick={handleSubmitUpiTransaction} disabled={loading} className="w-full">
+                    Submit Transaction ID
+                  </Button>
                 </div>
               )}
               <div className="mt-4 rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
@@ -910,10 +997,32 @@ const Checkout = () => {
             {loading
               ? "Processing..."
               : paymentMethod === "upi"
-                ? (upiPaymentInitiated ? "Place UPI Order" : "Pay via UPI")
+                ? "Pay via UPI"
                 : "Place Order"}
           </Button>
         </div>
+
+        {paymentMethod === "upi" && upiPaymentInitiated && (
+          <div className="mt-3 rounded-xl border border-border bg-white p-3 space-y-2">
+            <Label htmlFor="upiTransactionIdMobile" className="text-xs text-muted-foreground">UPI Transaction ID</Label>
+            <Input
+              id="upiTransactionIdMobile"
+              placeholder="Paste transaction id after payment"
+              value={upiTransactionId}
+              onChange={(e) => setUpiTransactionId(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSubmitUpiTransaction();
+                }
+              }}
+              className="bg-white"
+            />
+            <Button type="button" onClick={handleSubmitUpiTransaction} disabled={loading} className="w-full">
+              Submit Transaction ID
+            </Button>
+          </div>
+        )}
       </div>
       <Footer />
     </div>
