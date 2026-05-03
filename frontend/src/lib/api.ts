@@ -97,6 +97,8 @@ type ApiOrder = {
   total?: number;
   status?: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   paymentStatus?: "paid" | "unpaid" | "refunded";
+  paymentMethod?: "cod" | "upi" | string;
+  upiTransactionId?: string;
   createdAt?: string;
   items?: { name: string; qty: number; price: number }[];
   address?: string;

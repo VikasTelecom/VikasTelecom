@@ -38,6 +38,14 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
     paymentStatus: { type: String, enum: ["paid", "unpaid", "refunded"], default: "unpaid" },
+    paymentMethod: { type: String, enum: ["upi", "cod"], default: "cod" },
+    upiTransactionId: {
+      type: String,
+      trim: true,
+      required: function () {
+        return this.paymentMethod === "upi";
+      },
+    },
     paymentProvider: { type: String },
     paymentId: { type: String },
     paymentSessionId: { type: String },

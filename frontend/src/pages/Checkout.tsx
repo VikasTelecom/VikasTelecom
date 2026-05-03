@@ -31,6 +31,8 @@ type PaymentMethod = "cod" | "upi";
 const progressSteps = ["Cart", "Address", "Payment", "Review", "Success"] as const;
 const UPI_PAYEE_ID = "ranchhodbhai3@icici";
 const UPI_PAYEE_NAME = "Vikash Telecom";
+const UPI_INITIATED_KEY = "vt_upi_initiated";
+const UPI_REF_KEY = "vt_upi_ref";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -40,6 +42,8 @@ const Checkout = () => {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("upi");
+  const [upiTransactionId, setUpiTransactionId] = useState("");
+  const [upiPaymentInitiated, setUpiPaymentInitiated] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -137,7 +141,17 @@ const Checkout = () => {
     return `upi://pay?${params.toString()}`;
   };
 
-  const upiCheckoutRef = useMemo(() => `VTCHK${Date.now()}`, []);
+  const upiCheckoutRef = useMemo(() => {
+    try {
+      const existing = localStorage.getItem(UPI_REF_KEY);
+      if (existing) return existing;
+      const created = `VTCHK${Date.now()}`;
+      localStorage.setItem(UPI_REF_KEY, created);
+      return created;
+    } catch {
+      return `VTCHK${Date.now()}`;
+    }
+  }, []);
   const upiQrPayload = useMemo(
     () => buildUpiDeepLink(finalTotal, upiCheckoutRef),
     [finalTotal, upiCheckoutRef],
@@ -152,6 +166,27 @@ const Checkout = () => {
       setQrImageError(false);
     }
   }, [paymentMethod, upiQrImageUrl]);
+
+  useEffect(() => {
+    try {
+      setUpiPaymentInitiated(localStorage.getItem(UPI_INITIATED_KEY) === "1");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (paymentMethod !== "upi") {
+      setUpiPaymentInitiated(false);
+      setUpiTransactionId("");
+      try {
+        localStorage.removeItem(UPI_INITIATED_KEY);
+        localStorage.removeItem(UPI_REF_KEY);
+      } catch {
+        // ignore
+      }
+    }
+  }, [paymentMethod]);
 
   const validateField = (field: string, value: string) => {
     if (["name", "phone", "line1", "city", "state", "postalCode"].includes(field) && !value.trim()) {
@@ -298,6 +333,32 @@ const Checkout = () => {
     }
     try {
       setLoading(true);
+      if (paymentMethod === "upi") {
+        if (!upiPaymentInitiated) {
+          try {
+            localStorage.setItem(UPI_INITIATED_KEY, "1");
+          } catch {
+            // ignore
+          }
+          setUpiPaymentInitiated(true);
+          window.location.href = upiQrPayload;
+          toast({
+            title: "Redirecting to UPI app...",
+            description: `Complete payment, then enter the transaction id to place the order.`,
+          });
+          return;
+        }
+
+        if (!upiTransactionId.trim()) {
+          toast({
+            title: "Enter transaction id",
+            description: "After completing the UPI payment, paste the transaction id here to place the order.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       const orderPayload = {
         items: items.map((item) => ({
           product: item.product.id,
@@ -314,6 +375,7 @@ const Checkout = () => {
         total: finalTotal,
         address: selectedAddressId,
         paymentMethod,
+        upiTransactionId: paymentMethod === "upi" ? upiTransactionId.trim() : undefined,
       };
       const created = await api.createOrder(orderPayload);
       const address = addresses.find((entry) => entry._id === selectedAddressId);
@@ -331,16 +393,14 @@ const Checkout = () => {
       localStorage.setItem("last_order", JSON.stringify(summary));
 
       if (paymentMethod === "upi") {
-        const orderRef = summary.id || `VT${Date.now()}`;
-        const upiDeepLink = buildUpiDeepLink(finalTotal, orderRef);
-
-        // Opens installed UPI apps (GPay/PhonePe/Paytm/BHIM) on supported devices.
-        window.location.href = upiDeepLink;
-        toast({
-          title: "Redirecting to UPI app...",
-          description: `Pay ₹${finalTotal.toLocaleString("en-IN")} to ${UPI_PAYEE_ID}`,
-        });
-        return;
+        try {
+          localStorage.removeItem(UPI_INITIATED_KEY);
+          localStorage.removeItem(UPI_REF_KEY);
+        } catch {
+          // ignore
+        }
+        setUpiPaymentInitiated(false);
+        setUpiTransactionId("");
       }
 
       toast({ title: "Order placed successfully!" });
@@ -653,6 +713,22 @@ const Checkout = () => {
                     )}
                     <p className="mt-2 text-xs text-muted-foreground">This QR is generated with your current order total and pays to {UPI_PAYEE_ID}.</p>
                   </div>
+
+                  <div className="rounded-lg border border-border bg-white p-3 space-y-2">
+                    <Label htmlFor="upiTransactionId" className="text-xs text-muted-foreground">UPI Transaction ID</Label>
+                    <Input
+                      id="upiTransactionId"
+                      placeholder="Enter transaction id after payment"
+                      value={upiTransactionId}
+                      onChange={(e) => setUpiTransactionId(e.target.value)}
+                      className="bg-white"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {upiPaymentInitiated
+                        ? "After paying, paste the transaction id and click Pay via UPI again to place the order."
+                        : "Click Pay via UPI to open your UPI app, then come back and paste the transaction id."}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -786,7 +862,9 @@ const Checkout = () => {
                   </span>
                 ) : (
                   paymentMethod === "upi"
-                    ? `Pay via UPI — ₹${finalTotal.toLocaleString("en-IN")}`
+                    ? (upiPaymentInitiated
+                      ? `Place UPI Order — ₹${finalTotal.toLocaleString("en-IN")}`
+                      : `Pay via UPI — ₹${finalTotal.toLocaleString("en-IN")}`)
                     : `Place Order — ₹${finalTotal.toLocaleString("en-IN")}`
                 )}
               </Button>
@@ -821,7 +899,11 @@ const Checkout = () => {
             <p className="font-semibold">₹{finalTotal.toLocaleString()}</p>
           </div>
           <Button onClick={handlePay} disabled={loading || items.length === 0} className="flex-1">
-            {loading ? "Processing..." : paymentMethod === "upi" ? "Pay via UPI" : "Place Order"}
+            {loading
+              ? "Processing..."
+              : paymentMethod === "upi"
+                ? (upiPaymentInitiated ? "Place UPI Order" : "Pay via UPI")
+                : "Place Order"}
           </Button>
         </div>
       </div>

@@ -78,6 +78,7 @@ type OrderItem = {
 interface ExtendedOrder extends AdminOrder {
   phone?: string;
   paymentMethod?: string;
+  upiTransactionId?: string;
   shippingCost?: number;
   subtotal?: number;
   trackingNumber?: string;
@@ -142,6 +143,7 @@ export default function Orders() {
           status: order.status || "pending",
           paymentStatus: order.paymentStatus || "unpaid",
           paymentMethod: order.paymentMethod || "COD",
+          upiTransactionId: order.upiTransactionId || "",
           date: order.createdAt ? new Date(order.createdAt).toISOString().slice(0, 10) : "",
           items: order.items || [],
           address: formatShippingAddress(order.shippingAddress)
@@ -892,6 +894,13 @@ export default function Orders() {
                         <span className="text-gray-500">Payment Method</span>
                         <Badge variant="outline">{selectedOrder.paymentMethod}</Badge>
                       </div>
+
+                      {String(selectedOrder.paymentMethod || "").toLowerCase() === "upi" && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">UPI Transaction ID</span>
+                          <span className="font-medium">{selectedOrder.upiTransactionId || "—"}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="text-gray-500">Payment Status</span>
                         <Badge className={`${paymentColor[selectedOrder.paymentStatus]} border capitalize`}>

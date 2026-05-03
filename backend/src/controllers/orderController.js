@@ -7,6 +7,17 @@ const createOrder = async (req, res) => {
   const address = req.body.address || "";
   const couponCode = req.body.couponCode;
   const discount = Number(req.body.discount || 0);
+  const paymentMethodRaw = String(req.body.paymentMethod || "cod").toLowerCase();
+  const paymentMethod = paymentMethodRaw === "upi" || paymentMethodRaw === "cod" ? paymentMethodRaw : null;
+  const upiTransactionId = String(req.body.upiTransactionId || "").trim();
+
+  if (!paymentMethod) {
+    return res.status(400).json({ message: "Invalid payment method" });
+  }
+
+  if (paymentMethod === "upi" && !upiTransactionId) {
+    return res.status(400).json({ message: "UPI transaction id is required" });
+  }
 
   const computedTotal = items.reduce((sum, item) => {
     const price = Number(item.price || 0);
@@ -62,6 +73,8 @@ const createOrder = async (req, res) => {
     discount,
     address,
     shippingAddress,
+    paymentMethod,
+    upiTransactionId: paymentMethod === "upi" ? upiTransactionId : undefined,
   });
 
   return res.status(201).json({ order });
