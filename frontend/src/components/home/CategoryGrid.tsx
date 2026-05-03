@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { useCategories } from "@/contexts/CategoriesContext";
 
 const MotionLink = motion(Link);
@@ -12,6 +15,17 @@ const FALLBACK_CATEGORY_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURICom
 export const CategoryGrid = () => {
   const { categories, loading } = useCategories();
   const items = categories.filter((cat) => cat.status !== "inactive");
+  const [query, setQuery] = useState("");
+
+  const filteredItems = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((cat) => {
+      const title = String(cat.title || "").toLowerCase();
+      const slug = String(cat.slug || "").toLowerCase();
+      return title.includes(q) || slug.includes(q);
+    });
+  }, [items, query]);
 
   if (loading) {
     return <CategoryGridSkeleton />;
@@ -23,9 +37,24 @@ export const CategoryGrid = () => {
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Shop by Category</h2>
           <p className="text-muted-foreground">Find the perfect gadget for your needs</p>
+
+          <div className="relative max-w-sm mx-auto mt-4">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search categories"
+              className="pl-9"
+            />
+          </div>
         </div>
-        <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(76px,20vw)] overflow-x-auto pb-6 gap-2 -mx-4 px-3 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-4 lg:grid-cols-10 md:gap-3 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
-          {items.map((cat, i) => (
+        {filteredItems.length === 0 ? (
+          <div className="text-center text-sm text-muted-foreground py-10">
+            No categories found
+          </div>
+        ) : (
+          <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(76px,20vw)] overflow-x-auto pb-6 gap-2 -mx-4 px-3 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-4 lg:grid-cols-10 md:gap-3 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
+          {filteredItems.map((cat, i) => (
             <MotionLink
               key={cat.id}
               to={`/categories/${cat.slug}`}
@@ -54,6 +83,7 @@ export const CategoryGrid = () => {
             </MotionLink>
           ))}
         </div>
+        )}
       </div>
     </section>
   );
@@ -66,6 +96,7 @@ const CategoryGridSkeleton = () => {
         <div className="text-center mb-10">
           <Skeleton className="mx-auto mb-3 h-8 w-56" />
           <Skeleton className="mx-auto h-4 w-72" />
+          <Skeleton className="mx-auto mt-4 h-10 w-[320px] max-w-full" />
         </div>
         <div className="grid grid-flow-col grid-rows-2 auto-cols-[minmax(76px,20vw)] overflow-x-auto pb-6 gap-2 -mx-4 px-3 snap-x snap-mandatory md:grid-flow-row md:grid-rows-none md:auto-cols-auto md:grid-cols-4 lg:grid-cols-10 md:gap-3 md:overflow-visible md:pb-0 md:px-0 md:mx-0">
           {Array.from({ length: 6 }).map((_, index) => (
