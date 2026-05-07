@@ -313,6 +313,19 @@ const normalizeCategory = (category: ApiCategory) => {
   };
 };
 
+const normalizeBrand = (brand: any) => {
+  const normalizedLogo = normalizeAssetUrl(brand?.logo || brand?.image);
+
+  return {
+    ...brand,
+    id: brand?.id || brand?._id || "",
+    name: brand?.name || "",
+    slug: brand?.slug || "",
+    logo: normalizedLogo,
+    image: normalizedLogo,
+  };
+};
+
 const buildQuery = (params?: Record<string, string | number | boolean | undefined>) => {
   if (!params) return "";
   const query = new URLSearchParams();
@@ -406,11 +419,11 @@ export const api = {
   fetchBrands: async (category?: string) => {
     const url = category ? `/brands?category=${category}` : "/brands";
     const data = await apiRequest<{ items: any[] }>(url);
-    return data.items;
+    return data.items.map(normalizeBrand);
   },
   fetchBrand: async (slugOrId: string) => {
     const data = await apiRequest<{ brand: any }>(`/brands/${slugOrId}`);
-    return data.brand;
+    return normalizeBrand(data.brand);
   },
   adminListProducts: async (params?: Record<string, string | number | boolean | undefined>) => {
     return api.fetchProducts(params);
@@ -459,7 +472,7 @@ export const api = {
   adminListBrands: async (category?: string) => {
     const url = category ? `/brands?category=${category}` : "/brands";
     const data = await apiRequest<{ items: any[] }>(url);
-    return data.items;
+    return data.items.map(normalizeBrand);
   },
   adminCreateBrand: async (payload: Record<string, unknown>) => {
     const data = await apiRequest<{ brand: any }>("/brands", {

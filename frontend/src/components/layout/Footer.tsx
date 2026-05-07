@@ -1,35 +1,12 @@
 import { Facebook, Twitter, Instagram, Youtube, MapPin, Phone, Mail } from "lucide-react";
-import { Link } from "react-router-dom";
-
-const footerLinks = {
-  "Quick Links": [
-    { label: "Home", href: "/" },
-    { label: "Support", href: "/support" },
-    { label: "Blog", href: "#" },
-    { label: "FAQs", href: "#" },
-  ],
-  "Customer Service": [
-    { label: "Track Order", href: "#" },
-    { label: "Returns", href: "#" },
-    { label: "Shipping Policy", href: "#" },
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
-  ],
-  "Categories": [
-    { label: "Mobiles", href: "/mobiles" },
-    { label: "Accessories", href: "/collections/accessories" },
-    { label: "Charging", href: "/collections/charging" },
-    { label: "Audio", href: "/collections/audio" },
-  ],
-};
 
 export const Footer = () => {
   return (
     <footer id="footer-section" className="bg-foreground text-background">
       <div className="container-main py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 gap-8">
           {/* Brand */}
-          <div className="lg:col-span-2">
+          <div>
             <a href="/" className="flex items-center gap-2 mb-4">
               <img
                 src="/vikashlovesmeppu.jpeg"
@@ -49,22 +26,6 @@ export const Footer = () => {
               <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> <a href="mailto:vikastelecomnew2026@gmail.com" className="hover:text-primary transition-colors">vikastelecomnew2026@gmail.com</a></div>
             </div>
           </div>
-
-          {/* Links */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title}>
-              <h4 className="font-semibold text-sm mb-4">{title}</h4>
-              <ul className="space-y-2.5">
-                {links.map((item) => (
-                  <li key={item.label}>
-                    <Link to={item.href} className="text-sm text-background/60 hover:text-primary transition-colors">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
         </div>
       </div>
 
