@@ -139,6 +139,16 @@ type HeroBannerPayload = {
   textColors: string[];
 };
 
+type ApiBrand = {
+  id?: string;
+  _id?: string;
+  name?: string;
+  slug?: string;
+  logo?: string;
+  image?: string;
+  [key: string]: unknown;
+};
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://vikastelecom.onrender.com/api";
 
 const API_ORIGIN = (() => {
@@ -313,14 +323,14 @@ const normalizeCategory = (category: ApiCategory) => {
   };
 };
 
-const normalizeBrand = (brand: any) => {
-  const normalizedLogo = normalizeAssetUrl(brand?.logo || brand?.image);
+const normalizeBrand = (brand: ApiBrand) => {
+  const normalizedLogo = normalizeAssetUrl(brand.logo || brand.image);
 
   return {
     ...brand,
-    id: brand?.id || brand?._id || "",
-    name: brand?.name || "",
-    slug: brand?.slug || "",
+    id: brand.id || brand._id || "",
+    name: brand.name || "",
+    slug: brand.slug || "",
     logo: normalizedLogo,
     image: normalizedLogo,
   };
@@ -418,11 +428,11 @@ export const api = {
   },
   fetchBrands: async (category?: string) => {
     const url = category ? `/brands?category=${category}` : "/brands";
-    const data = await apiRequest<{ items: any[] }>(url);
+    const data = await apiRequest<{ items: ApiBrand[] }>(url);
     return data.items.map(normalizeBrand);
   },
   fetchBrand: async (slugOrId: string) => {
-    const data = await apiRequest<{ brand: any }>(`/brands/${slugOrId}`);
+    const data = await apiRequest<{ brand: ApiBrand }>(`/brands/${slugOrId}`);
     return normalizeBrand(data.brand);
   },
   adminListProducts: async (params?: Record<string, string | number | boolean | undefined>) => {
@@ -471,7 +481,7 @@ export const api = {
   },
   adminListBrands: async (category?: string) => {
     const url = category ? `/brands?category=${category}` : "/brands";
-    const data = await apiRequest<{ items: any[] }>(url);
+    const data = await apiRequest<{ items: ApiBrand[] }>(url);
     return data.items.map(normalizeBrand);
   },
   adminCreateBrand: async (payload: Record<string, unknown>) => {
