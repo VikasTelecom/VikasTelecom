@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Save, Store, Phone, Mail, Globe, MapPin, Bell, Shield, Palette, CreditCard, Truck, Images, Upload } from "lucide-react";
+import { Save, Store, Phone, Mail, Globe, MapPin, Bell, Shield, CreditCard, Truck, Images, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ const SECTIONS = [
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "shipping", label: "Shipping", icon: Truck },
     { id: "payment", label: "Payment", icon: CreditCard },
-    { id: "appearance", label: "Appearance", icon: Palette },
     { id: "security", label: "Security", icon: Shield },
 ];
 
@@ -72,18 +71,6 @@ export default function Settings() {
     const [payment, setPayment] = useState({
         upiEnabled: true,
         codEnabled: true,
-    });
-
-    // Appearance
-    const [appearance, setAppearance] = useState({
-        primaryColor: "#f97316",
-        accentColor: "#3b82f6",
-        font: "inter",
-        darkMode: false,
-        showBadges: true,
-        showRatings: true,
-        showDiscountTag: true,
-        productsPerRow: "4",
     });
 
     // Security
@@ -583,80 +570,6 @@ export default function Settings() {
                                     }}
                                 >
                                     <Save className="w-4 h-4" /> {savingPaymentSettings ? "Saving..." : "Save Changes"}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Appearance */}
-                    {activeSection === "appearance" && (
-                        <Card>
-                            <CardHeader className="pb-4">
-                                <CardTitle className="flex items-center gap-2 text-base"><Palette className="w-5 h-5 text-orange-500" /> Store Appearance</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <Label className="font-semibold">Primary Color</Label>
-                                        <div className="flex gap-2">
-                                            <input type="color" value={appearance.primaryColor} onChange={(e) => setAppearance({ ...appearance, primaryColor: e.target.value })}
-                                                className="h-9 w-12 rounded border cursor-pointer" />
-                                            <Input value={appearance.primaryColor} onChange={(e) => setAppearance({ ...appearance, primaryColor: e.target.value })} className="font-mono text-sm" />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="font-semibold">Accent Color</Label>
-                                        <div className="flex gap-2">
-                                            <input type="color" value={appearance.accentColor} onChange={(e) => setAppearance({ ...appearance, accentColor: e.target.value })}
-                                                className="h-9 w-12 rounded border cursor-pointer" />
-                                            <Input value={appearance.accentColor} onChange={(e) => setAppearance({ ...appearance, accentColor: e.target.value })} className="font-mono text-sm" />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="font-semibold">Font Family</Label>
-                                        <Select value={appearance.font} onValueChange={(v) => setAppearance({ ...appearance, font: v })}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="inter">Inter</SelectItem>
-                                                <SelectItem value="poppins">Poppins</SelectItem>
-                                                <SelectItem value="roboto">Roboto</SelectItem>
-                                                <SelectItem value="outfit">Outfit</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="font-semibold">Products per Row</Label>
-                                        <Select value={appearance.productsPerRow} onValueChange={(v) => setAppearance({ ...appearance, productsPerRow: v })}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="3">3 columns</SelectItem>
-                                                <SelectItem value="4">4 columns</SelectItem>
-                                                <SelectItem value="5">5 columns</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    {[
-                                        { key: "darkMode", label: "Dark Mode", desc: "Enable dark theme for the storefront" },
-                                        { key: "showBadges", label: "Show Product Badges", desc: "Display Sale, New, Bestseller badges on product cards" },
-                                        { key: "showRatings", label: "Show Star Ratings", desc: "Display product ratings on listing pages" },
-                                        { key: "showDiscountTag", label: "Show Discount Tag", desc: "Display % off tag on discounted products" },
-                                    ].map((item) => (
-                                        <div key={item.key} className="flex items-center justify-between py-3 border-b last:border-0">
-                                            <div>
-                                                <p className="font-medium text-sm">{item.label}</p>
-                                                <p className="text-xs text-muted-foreground">{item.desc}</p>
-                                            </div>
-                                            <Switch
-                                                checked={appearance[item.key as keyof typeof appearance] as boolean}
-                                                onCheckedChange={(v) => setAppearance({ ...appearance, [item.key]: v })}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                                <Button className="gap-2 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => handleSave("Appearance")}>
-                                    <Save className="w-4 h-4" /> Save Changes
                                 </Button>
                             </CardContent>
                         </Card>
