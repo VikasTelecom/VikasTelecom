@@ -246,6 +246,13 @@ const normalizeProduct = (product: ApiProduct) => {
   const hoverImage = normalizeAssetUrl(product.hoverImage) || image;
   const images = (product.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean);
 
+  const derivedRam =
+    product.ram ||
+    product.variants?.find((variant) => Boolean(variant?.attributes?.ram))?.attributes?.ram;
+  const derivedStorage =
+    product.storage ||
+    product.variants?.find((variant) => Boolean(variant?.attributes?.storage))?.attributes?.storage;
+
   return {
     id: product.id || product._id || "",
     title: product.title || product.name || "",
@@ -283,8 +290,8 @@ const normalizeProduct = (product: ApiProduct) => {
         images: (variant.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean),
       };
     }),
-    ram: product.ram,
-    storage: product.storage,
+    ram: derivedRam,
+    storage: derivedStorage,
     battery: product.battery,
     has5G: product.has5G,
     type: product.type,

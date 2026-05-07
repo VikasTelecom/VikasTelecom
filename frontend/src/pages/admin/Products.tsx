@@ -13,6 +13,34 @@ import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { useCategories } from "@/contexts/CategoriesContext";
 
+const normalizeQuickList = (value: string): string[] => {
+  const items = String(value || "")
+    .split(/\r?\n|,/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return [...new Set(items)];
+};
+
+const toSkuToken = (value: string): string => {
+  const token = String(value || "")
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .replace(/[^A-Z0-9]/g, "");
+  return token;
+};
+
+const toSkuPrefix = (value: string): string => {
+  const normalized = String(value || "")
+    .toUpperCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^A-Z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return normalized || "PRODUCT";
+};
+
 type CategoryOption = { id: string; name: string; slug: string };
 
 const statusBadge: Record<string, string> = {
@@ -235,6 +263,8 @@ export default function Products() {
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(defaultForm);
   const [activeSection, setActiveSection] = useState(0);
+  const [quickStorageList, setQuickStorageList] = useState("");
+  const [quickStorageCloneIndex, setQuickStorageCloneIndex] = useState("0");
 
   // Auto-calculate discount when price or mrp changes
   useEffect(() => {
@@ -357,6 +387,9 @@ export default function Products() {
       category: initialCategory,
       brand: "no-brand"
     });
+
+    setQuickStorageList("");
+    setQuickStorageCloneIndex("0");
     
     setDialogOpen(true);
   };
@@ -382,6 +415,9 @@ export default function Products() {
       specifications: p.specifications.length > 0 ? p.specifications : [{ feature: "", value: "" }],
       variants: p.variants || [],
     });
+
+    setQuickStorageList("");
+    setQuickStorageCloneIndex("0");
     setActiveSection(0);
     setDialogOpen(true);
   };
@@ -610,6 +646,74 @@ export default function Products() {
     ...f,
     variants: f.variants.map((variant, idx) => idx === i ? { ...variant, [key]: value } : variant),
   }));
+
+  const quickAddStorageVariants = () => {
+    const storages = normalizeQuickList(quickStorageList);
+    if (storages.length === 0) {
+      toast({ title: "Enter storage values first", description: "Example: 128 GB, 256 GB", variant: "destructive" });
+      return;
+    }
+
+    if (form.variants.length === 0) {
+      toast({
+        title: "Add one base variant first",
+        description: "Create a variant (with SKU) to clone, then use Quick Add Storages.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const baseIndex = Math.min(Math.max(Number(quickStorageCloneIndex) || 0, 0), form.variants.length - 1);
+    const baseVariant = form.variants[baseIndex];
+    const baseSku = (baseVariant.sku || "").trim();
+    const prefix = baseSku ? baseSku : toSkuPrefix(form.name);
+
+    const existingSkuSet = new Set(form.variants.map((v) => (v.sku || "").trim()).filter(Boolean));
+    const existingStorageSet = new Set(
+      form.variants
+        .map((v) => (v.storage || "").trim().toLowerCase())
+        .filter(Boolean),
+    );
+
+    const newVariants: VariantForm[] = [];
+    storages.forEach((storage) => {
+      const normalizedStorage = storage.trim();
+      if (!normalizedStorage) return;
+      if (existingStorageSet.has(normalizedStorage.toLowerCase())) return;
+
+      const token = toSkuToken(normalizedStorage);
+      let nextSku = token ? `${prefix}-${token}` : prefix;
+      if (!nextSku.trim()) nextSku = toSkuPrefix(form.name);
+
+      let counter = 1;
+      while (existingSkuSet.has(nextSku)) {
+        counter += 1;
+        nextSku = token ? `${prefix}-${token}-${counter}` : `${prefix}-${counter}`;
+      }
+
+      existingSkuSet.add(nextSku);
+      existingStorageSet.add(normalizedStorage.toLowerCase());
+
+      newVariants.push({
+        ...baseVariant,
+        sku: nextSku,
+        storage: normalizedStorage,
+        name: baseVariant.name || undefined,
+      });
+    });
+
+    if (newVariants.length === 0) {
+      toast({
+        title: "No new variants added",
+        description: "Those storage values already exist in variants.",
+      });
+      return;
+    }
+
+    setForm((f) => ({ ...f, variants: [...f.variants, ...newVariants] }));
+    setQuickStorageList("");
+    toast({ title: `Added ${newVariants.length} storage variants` });
+  };
 
   const addGalleryImage = () => setForm((f) => ({ ...f, gallery: [...f.gallery, ""] }));
   const removeGalleryImage = (i: number) => setForm((f) => ({
@@ -1277,6 +1381,41 @@ export default function Products() {
               <div className="space-y-4">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
                   💡 Add variants for different colors, storage, or sizes. Each variant can optionally override product-level images, pricing, inventory, and specifications.
+                </div>
+
+                <div className="p-4 rounded-lg border bg-muted/20 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold">Quick Add Storages</p>
+                      <p className="text-xs text-muted-foreground">Clones an existing variant and creates new variants with different storage values.</p>
+                    </div>
+                    <div className="w-full sm:w-56">
+                      <Select value={quickStorageCloneIndex} onValueChange={setQuickStorageCloneIndex} disabled={form.variants.length === 0}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Clone from" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {form.variants.map((v, idx) => (
+                            <SelectItem key={idx} value={String(idx)}>
+                              Variant {idx + 1}{v.sku?.trim() ? ` — ${v.sku.trim()}` : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <Textarea
+                    placeholder="Storages (comma or newline separated)\nExample:\n128 GB\n256 GB"
+                    value={quickStorageList}
+                    onChange={(e) => setQuickStorageList(e.target.value)}
+                    className="min-h-[70px] text-sm"
+                  />
+                  <div className="flex items-center justify-end">
+                    <Button variant="outline" size="sm" onClick={quickAddStorageVariants} disabled={form.variants.length === 0}>
+                      <Plus className="w-4 h-4 mr-1.5" /> Add Storage Variants
+                    </Button>
+                  </div>
                 </div>
 
                 {form.variants.length === 0 && (
