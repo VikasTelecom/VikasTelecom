@@ -80,16 +80,19 @@ type VariantForm = {
   name: string;
   image?: string;
   hoverImage?: string;
-  gallery?: string;
+  gallery?: string[];
   price?: string;
   mrp?: string;
   stock?: string;
   color: string;
+  colorMode?: "preset" | "custom";
   storage: string;
   ram: string;
   size: string;
   specifications?: Spec[];
 };
+
+type VariantStringKey = Exclude<keyof VariantForm, "gallery">;
 
 type AdminProductView = AdminProduct & {
   generalName?: string;
@@ -101,17 +104,19 @@ type AdminProductView = AdminProduct & {
 const mapVariantToForm = (variant: any): VariantForm => {
   const images = Array.isArray(variant.images) ? variant.images.filter(Boolean) : [];
   const [mainImage = "", hoverImage = "", ...gallery] = images;
+  const color = variant.attributes?.color || "";
 
   return {
     sku: variant.sku || "",
     name: variant.name || "",
     image: variant.image || mainImage,
     hoverImage: variant.hoverImage || hoverImage,
-    gallery: gallery.join("\n"),
+    gallery,
     price: variant.price?.toString() || "",
     mrp: variant.mrp?.toString() || "",
     stock: variant.stock?.toString() || "",
-    color: variant.attributes?.color || "",
+    color,
+    colorMode: color && !isPresetVariantColor(color) ? "custom" : "preset",
     storage: variant.attributes?.storage || "",
     ram: variant.attributes?.ram || "",
     size: variant.attributes?.size || "",
@@ -187,8 +192,54 @@ function calcDiscount(price: string, mrp: string): string {
   return "";
 }
 
+const PRESET_VARIANT_COLORS = [
+  "black",
+  "white",
+  "gray",
+  "grey",
+  "silver",
+  "gold",
+  "rose gold",
+  "rosegold",
+  "space gray",
+  "space grey",
+  "spacegray",
+  "midnight",
+  "starlight",
+  "graphite",
+  "red",
+  "blue",
+  "green",
+  "yellow",
+  "orange",
+  "purple",
+  "pink",
+  "titanium",
+  "bronze",
+  "copper",
+  "champagne",
+] as const;
+
+const CUSTOM_COLOR_VALUE = "__custom__";
+
+function normalizeColorToken(value: string): string {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isPresetVariantColor(value: string): boolean {
+  const normalized = normalizeColorToken(value);
+  return PRESET_VARIANT_COLORS.includes(normalized as (typeof PRESET_VARIANT_COLORS)[number]);
+}
+
 // Get color hex codes for preview
 function getColorHex(color: string): string {
+  const raw = String(color || "").trim();
+  if (!raw) return "#808080";
+
+  // Allow explicit CSS color formats for custom selections
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(raw)) return raw;
+  if (/^(rgb|rgba|hsl|hsla)\(/i.test(raw)) return raw;
+
   const colorMap: Record<string, string> = {
     // Basic colors
     'black': '#1a1a1a',
@@ -239,8 +290,8 @@ function getColorHex(color: string): string {
     'champagne': '#F7E7CE',
   };
   
-  const normalizedColor = color.toLowerCase().trim();
-  return colorMap[normalizedColor] || '#808080';
+  const normalizedColor = raw.toLowerCase().trim();
+  return colorMap[normalizedColor] || normalizedColor || '#808080';
 }
 
 export default function Products() {
@@ -433,9 +484,7 @@ export default function Products() {
       .filter((variant) => variant.sku.trim())
       .map((variant, variantIndex) => {
         // Variant-specific gallery
-        const variantGallery = variant.gallery
-          ? variant.gallery.split(/\r?\n|,/).map((entry) => entry.trim()).filter(Boolean)
-          : [];
+        const variantGallery = (variant.gallery || []).map((entry) => entry.trim()).filter(Boolean);
         
         const isVariantOne = variantIndex === 0;
         // Use variant images if provided, otherwise use product-level images
@@ -554,9 +603,7 @@ export default function Products() {
       const duplicateVariants = (product.variants || [])
         .filter((variant) => variant.sku.trim())
         .map((variant) => {
-          const variantGallery = variant.gallery
-            ? variant.gallery.split(/\r?\n|,/).map((entry) => entry.trim()).filter(Boolean)
-            : [];
+          const variantGallery = (variant.gallery || []).map((entry) => entry.trim()).filter(Boolean);
 
           const variantMainImage = variant.image || mainImage;
           const variantHoverImage = variant.hoverImage || product.hoverImage;
@@ -635,17 +682,65 @@ export default function Products() {
     ...f,
     variants: [
       ...f.variants,
-      { sku: "", name: "", color: "", storage: "", ram: "", size: "", image: "", hoverImage: "", gallery: "", price: "", mrp: "", stock: "", specifications: [] },
+      {
+        sku: "",
+        name: "",
+        color: "",
+        colorMode: "preset",
+        storage: "",
+        ram: "",
+        size: "",
+        image: "",
+        hoverImage: "",
+        gallery: [],
+        price: "",
+        mrp: "",
+        stock: "",
+        specifications: [],
+      },
     ],
   }));
   const removeVariant = (i: number) => setForm((f) => ({
     ...f,
     variants: f.variants.filter((_, idx) => idx !== i),
   }));
-  const updateVariant = (i: number, key: keyof VariantForm, value: string) => setForm((f) => ({
+  const updateVariant = (i: number, key: VariantStringKey, value: string) => setForm((f) => ({
     ...f,
     variants: f.variants.map((variant, idx) => idx === i ? { ...variant, [key]: value } : variant),
   }));
+
+  const addVariantGalleryImage = (variantIndex: number) => {
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.map((variant, idx) =>
+        idx === variantIndex
+          ? { ...variant, gallery: [...(variant.gallery || []), ""] }
+          : variant,
+      ),
+    }));
+  };
+
+  const removeVariantGalleryImage = (variantIndex: number, imageIndex: number) => {
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.map((variant, idx) =>
+        idx === variantIndex
+          ? { ...variant, gallery: (variant.gallery || []).filter((_, gIdx) => gIdx !== imageIndex) }
+          : variant,
+      ),
+    }));
+  };
+
+  const updateVariantGalleryImage = (variantIndex: number, imageIndex: number, value: string) => {
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.map((variant, idx) =>
+        idx === variantIndex
+          ? { ...variant, gallery: (variant.gallery || []).map((img, gIdx) => (gIdx === imageIndex ? value : img)) }
+          : variant,
+      ),
+    }));
+  };
 
   const quickAddStorageVariants = () => {
     const storages = normalizeQuickList(quickStorageList);
@@ -1454,11 +1549,62 @@ export default function Products() {
                     {/* Attributes */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="space-y-1.5">
-                        <Input
-                          placeholder="Color (e.g., black, silver)"
-                          value={variant.color}
-                          onChange={(e) => updateVariant(i, "color", e.target.value)}
-                        />
+                        <Select
+                          value={
+                            variant.colorMode === "custom"
+                              ? CUSTOM_COLOR_VALUE
+                              : (isPresetVariantColor(variant.color) ? normalizeColorToken(variant.color) : "")
+                          }
+                          onValueChange={(value) => {
+                            if (value === CUSTOM_COLOR_VALUE) {
+                              updateVariant(i, "colorMode", "custom");
+                              if (isPresetVariantColor(variant.color)) updateVariant(i, "color", "");
+                              return;
+                            }
+
+                            updateVariant(i, "colorMode", "preset");
+                            updateVariant(i, "color", value);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select color" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from(new Set(PRESET_VARIANT_COLORS)).map((color) => (
+                              <SelectItem key={color} value={color}>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="w-3 h-3 rounded-full border border-border"
+                                    style={{ backgroundColor: getColorHex(color) }}
+                                  />
+                                  <span className="capitalize">{color}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                            <SelectItem value={CUSTOM_COLOR_VALUE}>Custom…</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {variant.colorMode === "custom" && (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="color"
+                              aria-label="Pick custom color"
+                              className="w-14 px-1 py-1"
+                              value={
+                                /^#([0-9a-fA-F]{6})$/.test((variant.color || "").trim())
+                                  ? (variant.color || "").trim()
+                                  : "#808080"
+                              }
+                              onChange={(e) => updateVariant(i, "color", e.target.value)}
+                            />
+                            <Input
+                              placeholder="#rrggbb"
+                              value={variant.color}
+                              onChange={(e) => updateVariant(i, "color", e.target.value)}
+                            />
+                          </div>
+                        )}
                         {variant.color && (
                           <div className="flex items-center gap-2 p-2 bg-muted/30 rounded border text-xs">
                             <span className="text-muted-foreground">Preview:</span>
@@ -1519,12 +1665,46 @@ export default function Products() {
                             onChange={(e) => updateVariant(i, "hoverImage", e.target.value)}
                             className="text-sm"
                           />
-                          <Textarea
-                            placeholder="Gallery URLs (one per line, leave empty to use product gallery)"
-                            value={variant.gallery || ""}
-                            onChange={(e) => updateVariant(i, "gallery", e.target.value)}
-                            className="min-h-[60px] text-sm"
-                          />
+
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <Label className="text-xs font-semibold text-muted-foreground">Override Gallery Images</Label>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8"
+                                onClick={() => addVariantGalleryImage(i)}
+                              >
+                                <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Image
+                              </Button>
+                            </div>
+
+                            {(variant.gallery || []).length === 0 && (
+                              <p className="text-xs text-muted-foreground">No variant gallery overrides (product gallery will be used).</p>
+                            )}
+
+                            {(variant.gallery || []).map((img, imgIndex) => (
+                              <div key={imgIndex} className="flex items-center gap-2">
+                                <Input
+                                  placeholder="Gallery image URL"
+                                  value={img}
+                                  onChange={(e) => updateVariantGalleryImage(i, imgIndex, e.target.value)}
+                                  className="text-sm"
+                                />
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-9 w-9 text-muted-foreground hover:text-red-500 hover:bg-red-50"
+                                  onClick={() => removeVariantGalleryImage(i, imgIndex)}
+                                  title="Remove image"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
 
                         {/* Override Pricing */}

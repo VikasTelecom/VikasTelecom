@@ -34,7 +34,7 @@ const ProductDetails = () => {
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const { addToCart, setIsCartOpen } = useCart();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -498,7 +498,7 @@ const ProductDetails = () => {
                             return (
                               <button
                                 key={color}
-                                onClick={() => setSelectedVariant(variant)}
+                                onClick={() => setSelectedVariant(variant || null)}
                                 className={`relative group`}
                               >
                                 <div
@@ -569,7 +569,7 @@ const ProductDetails = () => {
                             return (
                               <button
                                 key={storage}
-                                onClick={() => setSelectedVariant(variant)}
+                                onClick={() => setSelectedVariant(variant || null)}
                                 className={`px-4 py-2.5 rounded-lg border-2 font-medium text-sm transition-all ${
                                   isSelected
                                     ? "border-primary bg-primary/5 text-primary scale-105"
@@ -742,7 +742,7 @@ const ProductDetails = () => {
         {/* Tabs */}
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-8 lg:mt-12">
           <div className="bg-white rounded-xl shadow-sm border border-border/50 overflow-hidden">
-            <ProductTabs product={product} />
+            <ProductTabs product={product} variant={selectedVariant} />
           </div>
         </div>
 

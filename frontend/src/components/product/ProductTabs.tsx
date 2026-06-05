@@ -2,10 +2,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, ThumbsUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductDetail } from "@/data/productDetails";
+import type { ProductVariant } from "@/data/products";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProductTabsProps {
   product: ProductDetail;
+  variant?: ProductVariant | null;
 }
 
 type TabKey = "description" | "specifications" | "reviews";
@@ -16,7 +18,7 @@ const tabs: { key: TabKey; label: string }[] = [
   { key: "reviews", label: "Reviews" },
 ];
 
-export const ProductTabs = ({ product }: ProductTabsProps) => {
+export const ProductTabs = ({ product, variant }: ProductTabsProps) => {
   const [activeTab, setActiveTab] = useState<TabKey>("description");
   const [reviewPage, setReviewPage] = useState(1);
   const isMobile = useIsMobile();
@@ -55,6 +57,7 @@ export const ProductTabs = ({ product }: ProductTabsProps) => {
                     <TabContent
                       tab={tab.key}
                       product={product}
+                      variant={variant}
                       reviewPage={reviewPage}
                       setReviewPage={setReviewPage}
                       reviewsPerPage={reviewsPerPage}
@@ -103,6 +106,7 @@ export const ProductTabs = ({ product }: ProductTabsProps) => {
           <TabContent
             tab={activeTab}
             product={product}
+            variant={variant}
             reviewPage={reviewPage}
             setReviewPage={setReviewPage}
             reviewsPerPage={reviewsPerPage}
@@ -116,17 +120,21 @@ export const ProductTabs = ({ product }: ProductTabsProps) => {
 function TabContent({
   tab,
   product,
+  variant,
   reviewPage,
   setReviewPage,
   reviewsPerPage,
 }: {
   tab: TabKey;
   product: ProductDetail;
+  variant?: ProductVariant | null;
   reviewPage: number;
   setReviewPage: (p: number) => void;
   reviewsPerPage: number;
 }) {
-  const specifications = product.specifications || [];
+  const specifications = (variant?.specifications && variant.specifications.length > 0
+    ? variant.specifications
+    : product.specifications) || [];
   const reviews = product.reviews || [];
   const ratingBreakdown = (product.ratingBreakdown && product.ratingBreakdown.length > 0)
     ? product.ratingBreakdown

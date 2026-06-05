@@ -13,6 +13,7 @@ export interface ProductVariant {
     size?: string;
   };
   images?: string[];
+  specifications?: { feature: string; value: string }[];
   status?: "active" | "draft" | "out_of_stock";
 }
 
