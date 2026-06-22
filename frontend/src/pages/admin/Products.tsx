@@ -101,16 +101,24 @@ type AdminProductView = AdminProduct & {
   variants?: VariantForm[];
 };
 
+const getVariantGalleryImages = (variant: any, candidateImages: string[] = []): string[] => {
+  const images = Array.isArray(candidateImages) ? candidateImages.filter(Boolean) : [];
+  const mainImage = variant.image || images[0] || "";
+  const hoverImage = variant.hoverImage || images[1] || "";
+
+  return images.filter((image) => image && image !== mainImage && image !== hoverImage);
+};
+
 const mapVariantToForm = (variant: any): VariantForm => {
   const images = Array.isArray(variant.images) ? variant.images.filter(Boolean) : [];
-  const [mainImage = "", hoverImage = "", ...gallery] = images;
+  const gallery = getVariantGalleryImages(variant, images);
   const color = variant.attributes?.color || "";
 
   return {
     sku: variant.sku || "",
     name: variant.name || "",
-    image: variant.image || mainImage,
-    hoverImage: variant.hoverImage || hoverImage,
+    image: variant.image || images[0] || "",
+    hoverImage: variant.hoverImage || images[1] || "",
     gallery,
     price: variant.price?.toString() || "",
     mrp: variant.mrp?.toString() || "",
