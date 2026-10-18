@@ -298,6 +298,12 @@ export const Header = () => {
                 {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
               </button>
 
+              <img
+                src="/Trusted%20Logo%20left%20below.jpeg"
+                alt="Trusted since 2008 — happy customer"
+                className="h-8 w-8 shrink-0 object-contain sm:hidden"
+              />
+
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

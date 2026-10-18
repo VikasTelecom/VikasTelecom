@@ -2,6 +2,7 @@ const Product = require("../models/Product");
 const Order = require("../models/Order");
 const User = require("../models/User");
 const PaymentSettings = require("../models/PaymentSettings");
+const StoreSettings = require("../models/StoreSettings");
 
 const buildLast7Days = () => {
   const days = [];
@@ -104,6 +105,46 @@ const defaultPaymentSettings = {
   codEnabled: true,
 };
 
+const defaultStoreSettings = {
+  name: "Vikash Telecom",
+  tagline: "India's Best Electronics & Mobile Accessories",
+  email: "support@vikash.com",
+  phone: "+91 98765 43210",
+  website: "www.vikash.com",
+  address: "123, Tech Park, Pune, Maharashtra 411001",
+  currency: "INR",
+  language: "en",
+  gst: "27AABCV1234A1Z5",
+  description: "Vikash Telecom is a leading online store for electronics, mobile accessories, audio devices, and smart gadgets in India.",
+};
+
+const getStoreSettings = async (_req, res) => {
+  const settings = await StoreSettings.findOne({ key: "store" }).lean();
+  return res.json({ ...defaultStoreSettings, ...(settings || {}) });
+};
+
+const updateStoreSettings = async (req, res) => {
+  const body = req.body || {};
+  const payload = Object.fromEntries(
+    Object.entries(defaultStoreSettings).map(([key, fallback]) => [
+      key,
+      typeof body[key] === "string" ? body[key].trim() : fallback,
+    ])
+  );
+
+  if (!["INR", "USD"].includes(payload.currency) || !["en", "hi"].includes(payload.language)) {
+    return res.status(400).json({ message: "Invalid currency or language" });
+  }
+
+  const settings = await StoreSettings.findOneAndUpdate(
+    { key: "store" },
+    { $set: payload },
+    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+  ).lean();
+
+  return res.json({ message: "Store settings updated", settings: { ...defaultStoreSettings, ...settings } });
+};
+
 const getPaymentSettings = async (req, res) => {
   const settings = await PaymentSettings.findOne();
   if (!settings) {
@@ -141,6 +182,8 @@ const updatePaymentSettings = async (req, res) => {
 
 module.exports = {
   getAdminAnalytics,
+  getStoreSettings,
+  updateStoreSettings,
   getPaymentSettings,
   updatePaymentSettings,
 };

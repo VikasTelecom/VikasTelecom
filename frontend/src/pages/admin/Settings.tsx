@@ -30,6 +30,8 @@ export default function Settings() {
     const [uploadingBanners, setUploadingBanners] = useState([false, false, false]);
     const [loadingPaymentSettings, setLoadingPaymentSettings] = useState(false);
     const [savingPaymentSettings, setSavingPaymentSettings] = useState(false);
+    const [loadingStoreSettings, setLoadingStoreSettings] = useState(true);
+    const [savingStoreSettings, setSavingStoreSettings] = useState(false);
 
     // Store Info
     const [store, setStore] = useState({
@@ -44,6 +46,22 @@ export default function Settings() {
         gst: "27AABCV1234A1Z5",
         description: "Vikash Telecom is a leading online store for electronics, mobile accessories, audio devices, and smart gadgets in India.",
     });
+
+    useEffect(() => {
+        if (activeSection !== "store") return;
+
+        setLoadingStoreSettings(true);
+        api.adminGetStoreSettings()
+            .then(setStore)
+            .catch((error) => {
+                toast({
+                    title: "Failed to load store settings",
+                    description: (error as Error).message,
+                    variant: "destructive",
+                });
+            })
+            .finally(() => setLoadingStoreSettings(false));
+    }, [activeSection]);
 
     // Notifications
     const [notifications, setNotifications] = useState({
@@ -257,8 +275,27 @@ export default function Settings() {
                                         </Select>
                                     </div>
                                 </div>
-                                <Button className="gap-2 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => handleSave("Store")}>
-                                    <Save className="w-4 h-4" /> Save Changes
+                                <Button
+                                    className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+                                    disabled={loadingStoreSettings || savingStoreSettings}
+                                    onClick={async () => {
+                                        setSavingStoreSettings(true);
+                                        try {
+                                            const updated = await api.adminUpdateStoreSettings(store);
+                                            setStore(updated);
+                                            toast({ title: "✅ Store settings saved successfully!" });
+                                        } catch (error) {
+                                            toast({
+                                                title: "Failed to save store settings",
+                                                description: (error as Error).message,
+                                                variant: "destructive",
+                                            });
+                                        } finally {
+                                            setSavingStoreSettings(false);
+                                        }
+                                    }}
+                                >
+                                    <Save className="w-4 h-4" /> {savingStoreSettings ? "Saving..." : "Save Changes"}
                                 </Button>
                             </CardContent>
                         </Card>

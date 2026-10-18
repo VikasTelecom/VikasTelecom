@@ -662,6 +662,52 @@ export const api = {
   fetchAdminAnalytics: async () => {
     return apiRequest<{ stats: unknown; salesData: unknown[]; recentOrders: unknown[]; categorySales: unknown[]; topProducts: unknown[] }>("/admin/analytics");
   },
+  adminGetStoreSettings: async () => {
+    return apiRequest<{
+      name: string;
+      tagline: string;
+      email: string;
+      phone: string;
+      website: string;
+      address: string;
+      currency: "INR" | "USD";
+      language: "en" | "hi";
+      gst: string;
+      description: string;
+    }>("/admin/store-settings");
+  },
+  adminUpdateStoreSettings: async (payload: {
+    name: string;
+    tagline: string;
+    email: string;
+    phone: string;
+    website: string;
+    address: string;
+    currency: "INR" | "USD";
+    language: "en" | "hi";
+    gst: string;
+    description: string;
+  }) => {
+    const data = await apiRequest<{
+      message: string;
+      settings: {
+        name: string;
+        tagline: string;
+        email: string;
+        phone: string;
+        website: string;
+        address: string;
+        currency: "INR" | "USD";
+        language: "en" | "hi";
+        gst: string;
+        description: string;
+      };
+    }>("/admin/store-settings", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    return data.settings;
+  },
   adminGetPaymentSettings: async () => {
     return apiRequest<{
       upiEnabled: boolean;
