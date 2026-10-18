@@ -33,6 +33,7 @@ import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
+import { TrustedLogo } from "@/components/layout/TrustedLogo";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminProtectedRoute from "@/pages/admin/AdminProtectedRoute";
 import Dashboard from "@/pages/admin/Dashboard";
@@ -97,6 +98,7 @@ function AppContent() {
       </Routes>
       {!isAdmin && !isCartOpen && <MobileBottomNav />}
       {!isAdmin && !isCartOpen && <WhatsAppButton />}
+      {!isAdmin && !isCartOpen && <TrustedLogo />}
     </div>
   );
 }
