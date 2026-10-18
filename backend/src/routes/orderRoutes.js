@@ -1,5 +1,6 @@
 const express = require("express");
 const {
+  createCounterOrder,
   createOrder,
   listMyOrders,
   listOrders,
@@ -11,6 +12,7 @@ const { requireAuth, requireAdmin } = require("../middleware/auth");
 
 const router = express.Router();
 
+router.post("/counter", asyncHandler(createCounterOrder));
 router.post("/", requireAuth, asyncHandler(createOrder));
 router.get("/me", requireAuth, asyncHandler(listMyOrders));
 router.get("/", requireAuth, requireAdmin, asyncHandler(listOrders));

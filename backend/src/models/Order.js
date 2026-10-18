@@ -27,7 +27,10 @@ const orderSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     customerName: { type: String },
+    customerPhone: { type: String, trim: true },
     email: { type: String },
+    fulfillmentType: { type: String, enum: ["delivery", "counter"], default: "delivery" },
+    pickupLocation: { type: String, trim: true },
     items: [orderItemSchema],
     total: { type: Number, required: true },
     couponCode: { type: String },

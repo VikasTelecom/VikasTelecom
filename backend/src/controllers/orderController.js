@@ -1,6 +1,96 @@
 const Order = require("../models/Order");
 const Coupon = require("../models/Coupon");
 const Address = require("../models/Address");
+const Product = require("../models/Product");
+const mongoose = require("mongoose");
+
+const createCounterOrder = async (req, res) => {
+  const customerName = String(req.body.customerName || "").trim();
+  const customerPhone = String(req.body.customerPhone || "").trim();
+  const productId = String(req.body.productId || "").trim();
+  const quantity = Number(req.body.quantity);
+  const phoneDigits = customerPhone.replace(/\D/g, "");
+
+  if (customerName.length < 2 || customerName.length > 100) {
+    return res.status(400).json({ message: "Enter a valid customer name" });
+  }
+  if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+    return res.status(400).json({ message: "Enter a valid mobile number" });
+  }
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    return res.status(400).json({ message: "Invalid product" });
+  }
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+    return res.status(400).json({ message: "Quantity must be between 1 and 20" });
+  }
+
+  const product = await Product.findById(productId);
+  if (!product || product.status === "draft" || product.status === "out_of_stock" || product.inStock === false) {
+    return res.status(404).json({ message: "This product is not available for counter order" });
+  }
+
+  let selectedVariant;
+  const variantSku = String(req.body.variantSku || "").trim();
+  const variantName = String(req.body.variantName || "").trim();
+  const variantAttributes = req.body.variantAttributes || {};
+  if (product.variants?.length) {
+    selectedVariant = product.variants.find((variant) =>
+      (variantSku && variant.sku === variantSku) ||
+      (!variantSku && variantName && variant.name === variantName) ||
+      (!variantSku && !variantName && Object.keys(variantAttributes).length > 0 &&
+        ["color", "storage", "ram", "size"].every((key) =>
+          !variantAttributes[key] || variant.attributes?.[key] === variantAttributes[key]
+        ))
+    );
+    if (!selectedVariant) {
+      return res.status(400).json({ message: "Selected product option is no longer available" });
+    }
+    if (selectedVariant.status === "draft" || selectedVariant.status === "out_of_stock") {
+      return res.status(400).json({ message: "Selected product option is out of stock" });
+    }
+    if (Number.isFinite(selectedVariant.stock) && selectedVariant.stock < quantity) {
+      return res.status(400).json({ message: "Not enough stock for the selected option" });
+    }
+  } else if (Number.isFinite(product.stock) && product.stock < quantity) {
+    return res.status(400).json({ message: "Not enough stock for this product" });
+  }
+
+  const price = Number(selectedVariant?.price ?? product.price);
+  const attributes = selectedVariant?.attributes || {};
+  const order = await Order.create({
+    customerName,
+    customerPhone,
+    email: "",
+    fulfillmentType: "counter",
+    pickupLocation: "Vikash Telecom Shop",
+    items: [{
+      product: product._id,
+      productId: String(product._id),
+      name: product.title,
+      category: product.category,
+      qty: quantity,
+      price,
+      image: selectedVariant?.image || product.image,
+      variant: selectedVariant ? {
+        sku: selectedVariant.sku,
+        name: selectedVariant.name,
+        attributes: {
+          color: attributes.color,
+          storage: attributes.storage,
+          ram: attributes.ram,
+          size: attributes.size,
+        },
+      } : undefined,
+    }],
+    total: price * quantity,
+    status: "pending",
+    paymentStatus: "unpaid",
+    paymentMethod: "cod",
+    shippingAddress: { name: customerName, phone: customerPhone },
+  });
+
+  return res.status(201).json({ order });
+};
 
 const createOrder = async (req, res) => {
   const items = Array.isArray(req.body.items) ? req.body.items : [];
@@ -122,6 +212,7 @@ const deleteOrder = async (req, res) => {
 };
 
 module.exports = {
+  createCounterOrder,
   createOrder,
   listMyOrders,
   listOrders,

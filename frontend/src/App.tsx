@@ -39,6 +39,7 @@ import AdminProtectedRoute from "@/pages/admin/AdminProtectedRoute";
 import Dashboard from "@/pages/admin/Dashboard";
 import AdminProducts from "@/pages/admin/Products";
 import AdminOrders from "@/pages/admin/Orders";
+import AdminCounterOrders from "@/pages/admin/CounterOrders";
 import AdminCategories from "@/pages/admin/Categories";
 import AdminBrands from "@/pages/admin/Brands";
 import AdminCoupons from "@/pages/admin/Coupons";
@@ -88,6 +89,7 @@ function AppContent() {
           <Route path="brands" element={<AdminBrands />} />
           <Route path="coupons" element={<AdminCoupons />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="counter-orders" element={<AdminCounterOrders />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="analytics" element={<AdminAnalytics />} />

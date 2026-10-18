@@ -150,7 +150,7 @@ export default function Orders() {
           id: order.id || order._id || "",
           customer: order.customerName || "",
           email: order.email || "",
-          phone: order.phone || order.shippingAddress?.phone || "+91 9876543210",
+          phone: order.customerPhone || order.phone || order.shippingAddress?.phone || "—",
           total: order.total || 0,
           status: order.status || "pending",
           paymentStatus: order.paymentStatus || "unpaid",

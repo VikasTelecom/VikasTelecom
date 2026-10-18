@@ -94,7 +94,10 @@ type ApiOrder = {
   _id?: string;
   id?: string;
   customerName?: string;
+  customerPhone?: string;
   email?: string;
+  fulfillmentType?: "delivery" | "counter";
+  pickupLocation?: string;
   total?: number;
   status?: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   paymentStatus?: "paid" | "unpaid" | "refunded";
@@ -582,6 +585,14 @@ export const api = {
     const data = await apiRequest<{ order: ApiOrder }>("/orders", {
       method: "POST",
       body: JSON.stringify(payload),
+    });
+    return data.order;
+  },
+  createCounterOrder: async (payload: Record<string, unknown>) => {
+    const data = await apiRequest<{ order: ApiOrder }>("/orders/counter", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      skipAuth: true,
     });
     return data.order;
   },

@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import {
   Star,
@@ -8,6 +8,7 @@ import {
   MessageCircle,
   PhoneCall,
   Share2,
+  UserRound,
   Minus,
   Plus,
   ChevronRight,
@@ -27,6 +28,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { openProductWhatsApp, WHATSAPP_BUSINESS_NUMBER } from "@/lib/whatsapp";
 import { shareOrCopy } from "@/lib/share";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +40,10 @@ const ProductDetails = () => {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [counterOrderOpen, setCounterOrderOpen] = useState(false);
+  const [counterCustomerName, setCounterCustomerName] = useState("");
+  const [counterCustomerPhone, setCounterCustomerPhone] = useState("");
+  const [counterOrderSubmitting, setCounterOrderSubmitting] = useState(false);
   const { addToCart, setIsCartOpen } = useCart();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -295,6 +304,34 @@ const ProductDetails = () => {
       description: `${product.title} added. Redirecting...`,
     });
     navigate("/checkout");
+  };
+
+  const handleCounterOrder = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!product) return;
+    setCounterOrderSubmitting(true);
+    try {
+      await api.createCounterOrder({
+        customerName: counterCustomerName.trim(),
+        customerPhone: counterCustomerPhone.trim(),
+        productId: product.id,
+        quantity,
+        variantSku: selectedVariant?.sku,
+        variantName: selectedVariant?.name,
+        variantAttributes: selectedVariant?.attributes,
+      });
+      setCounterOrderOpen(false);
+      setCounterCustomerName("");
+      setCounterCustomerPhone("");
+      toast({
+        title: "Counter order placed",
+        description: "Your order is ready. Please collect it from our shop.",
+      });
+    } catch (error) {
+      toast({ title: "Could not place counter order", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setCounterOrderSubmitting(false);
+    }
   };
 
   const handleWhatsAppInquiry = () => {
@@ -694,9 +731,18 @@ const ProductDetails = () => {
                       <PhoneCall className="w-4 h-4" />
                       Rapid Delivery
                     </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setCounterOrderOpen(true)}
+                      disabled={!canPurchase}
+                      className="w-full py-3 bg-blue-600 text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-blue-700 transition-colors shadow-md disabled:opacity-60"
+                    >
+                      <UserRound className="w-4 h-4" />
+                      Counter Order
+                    </motion.button>
                   </div>
 
-                  <div className="hidden sm:grid sm:grid-cols-4 gap-3">
+                  <div className="hidden sm:grid sm:grid-cols-5 gap-3">
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={handleAddToCart}
@@ -731,6 +777,15 @@ const ProductDetails = () => {
                       <PhoneCall className="w-4 h-4" />
                       Rapid Delivery
                     </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setCounterOrderOpen(true)}
+                      disabled={!canPurchase}
+                      className="py-3 bg-blue-600 text-white font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-blue-700 transition-colors shadow-md disabled:opacity-60"
+                    >
+                      <UserRound className="w-4 h-4" />
+                      Counter Order
+                    </motion.button>
                   </div>
                 </div>
 
@@ -753,6 +808,54 @@ const ProductDetails = () => {
           </div>
         </div>
       </main>
+
+      <Dialog open={counterOrderOpen} onOpenChange={setCounterOrderOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Place a Counter Order</DialogTitle>
+            <DialogDescription>
+              Reserve {quantity} × {product.title}{selectedVariant?.name ? ` (${selectedVariant.name})` : ""} to collect from our shop.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCounterOrder} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="counter-customer-name">Your name</Label>
+              <Input
+                id="counter-customer-name"
+                autoComplete="name"
+                required
+                minLength={2}
+                maxLength={100}
+                value={counterCustomerName}
+                onChange={(event) => setCounterCustomerName(event.target.value)}
+                placeholder="Enter your name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="counter-customer-phone">Mobile number</Label>
+              <Input
+                id="counter-customer-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                required
+                minLength={10}
+                maxLength={16}
+                pattern="[+0-9()\\s-]{10,16}"
+                value={counterCustomerPhone}
+                onChange={(event) => setCounterCustomerPhone(event.target.value)}
+                placeholder="Enter your mobile number"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCounterOrderOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={counterOrderSubmitting} className="bg-blue-600 hover:bg-blue-700">
+                {counterOrderSubmitting ? "Placing order..." : "Place Order"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Mobile sticky bottom bar */}
       {isMobile && (
