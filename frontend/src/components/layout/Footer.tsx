@@ -21,7 +21,7 @@ export const Footer = () => {
               Your trusted destination for mobile and computer accessories. Quality products, competitive prices, and exceptional service.
             </p>
             <div className="space-y-2 text-sm text-background/60">
-              <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Shop No 3, Zaverchand Medhani Tower, University Rd, Rajkot 360005</div>
+              <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Shop No 3, Zaverchand Meghani Tower, University Rd, Rajkot 360005</div>
               <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary" /> <a href="tel:9327511512" className="hover:text-primary transition-colors">9327511512</a></div>
               <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> <a href="mailto:vikastelecomnew2026@gmail.com" className="hover:text-primary transition-colors">vikastelecomnew2026@gmail.com</a></div>
             </div>

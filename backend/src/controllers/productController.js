@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
 const User = require("../models/User");
+const Category = require("../models/Category");
+const Brand = require("../models/Brand");
 const slugify = require("../utils/slugify");
 
 const looksLikeObjectId = (value) => {
@@ -42,6 +44,18 @@ const normalizeImageList = (...values) => {
     .filter(Boolean);
 
   return [...new Set(normalized)];
+};
+
+const escapeRegExp = (value) => String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const buildSearchTokens = (value) => {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) return [];
+
+  return trimmed.split(/\s+/).filter(Boolean).map((token) => {
+    const escaped = escapeRegExp(token).replace(/[-_]+/g, "(?:[\\s-]*)");
+    return token.length > 2 ? `\\b${escaped}\\b` : escaped;
+  });
 };
 
 const normalizeVariant = (variant = {}) => {
@@ -98,11 +112,12 @@ const listProducts = async (req, res) => {
   const filter = {};
 
   if (q) {
-    filter.$or = [
-      { title: { $regex: q, $options: "i" } },
-      { description: { $regex: q, $options: "i" } },
-      { brand: { $regex: q, $options: "i" } },
-    ];
+    const searchPatterns = buildSearchTokens(q);
+    const fields = ["title", "description", "generalName", "brand", "category"];
+
+    filter.$and = searchPatterns.map((pattern) => ({
+      $or: fields.map((field) => ({ [field]: { $regex: pattern, $options: "i" } })),
+    }));
   }
 
   if (category) {
