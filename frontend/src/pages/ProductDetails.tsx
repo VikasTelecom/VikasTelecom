@@ -202,7 +202,8 @@ const ProductDetails = () => {
       ? "Limited Stock"
       : "In Stock";
 
-  const canPurchase = currentAvailability !== "Out of Stock";
+  const canPurchase = currentAvailability !== "Out of Stock" && currentPrice > 0;
+  const purchaseDisabledLabel = currentAvailability === "Out of Stock" ? "Out of Stock" : "Price unavailable";
 
   // Get unique colors and storage options from variants that admin added
   const availableColors = product.variants
@@ -453,15 +454,25 @@ const ProductDetails = () => {
                 {/* Price */}
                 <div className="bg-muted/30 rounded-xl p-3 lg:p-4 space-y-2">
                   <div className="flex items-baseline gap-2.5 flex-wrap">
-                    <span className="text-2xl lg:text-3xl font-bold text-foreground">
-                      ₹{currentPrice.toLocaleString()}
-                    </span>
-                    <span className="text-lg lg:text-xl text-muted-foreground line-through">
-                      ₹{currentMrp.toLocaleString()}
-                    </span>
-                    <span className="text-sm lg:text-base font-bold text-white bg-green-600 px-2.5 py-0.5 rounded-md">
-                      {currentDiscount}% off
-                    </span>
+                    {currentPrice > 0 ? (
+                      <>
+                        <span className="text-2xl lg:text-3xl font-bold text-foreground">
+                          ₹{currentPrice.toLocaleString()}
+                        </span>
+                        {currentMrp > currentPrice && (
+                          <span className="text-lg lg:text-xl text-muted-foreground line-through">
+                            ₹{currentMrp.toLocaleString()}
+                          </span>
+                        )}
+                        {currentDiscount > 0 && (
+                          <span className="text-sm lg:text-base font-bold text-white bg-green-600 px-2.5 py-0.5 rounded-md">
+                            {currentDiscount}% off
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-lg font-semibold text-muted-foreground">Price unavailable</span>
+                    )}
                   </div>
                   {product.emi && (
                     <p className="text-xs text-muted-foreground">
@@ -703,7 +714,7 @@ const ProductDetails = () => {
                         className="flex-1 py-3 bg-primary text-primary-foreground font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-primary-hover transition-colors shadow-md disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        {canPurchase ? "Add to Cart" : "Out of Stock"}
+                        {canPurchase ? "Add to Cart" : purchaseDisabledLabel}
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.95 }}
@@ -750,7 +761,7 @@ const ProductDetails = () => {
                       className="py-3 bg-primary text-primary-foreground font-semibold text-sm rounded-lg flex items-center justify-center gap-1.5 hover:bg-primary-hover transition-colors shadow-md disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
                     >
                       <ShoppingCart className="w-4 h-4" />
-                      {canPurchase ? "Add to Cart" : "Out of Stock"}
+                      {canPurchase ? "Add to Cart" : purchaseDisabledLabel}
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
@@ -861,12 +872,20 @@ const ProductDetails = () => {
       {isMobile && (
         <div className="fixed bottom-16 left-0 right-0 bg-background border-t-2 border-border p-3 flex items-center gap-3 z-40 shadow-lg">
           <div className="flex-1">
-            <span className="text-lg font-semibold text-foreground">
-              ₹{currentPrice.toLocaleString()}
-            </span>
-            <span className="text-xs text-muted-foreground line-through ml-1.5">
-              ₹{currentMrp.toLocaleString()}
-            </span>
+            {currentPrice > 0 ? (
+              <>
+                <span className="text-lg font-semibold text-foreground">
+                  ₹{currentPrice.toLocaleString()}
+                </span>
+                {currentMrp > currentPrice && (
+                  <span className="text-xs text-muted-foreground line-through ml-1.5">
+                    ₹{currentMrp.toLocaleString()}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-sm font-semibold text-muted-foreground">Price unavailable</span>
+            )}
           </div>
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -874,7 +893,7 @@ const ProductDetails = () => {
             disabled={!canPurchase}
             className="px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg text-xs shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {canPurchase ? "Add to Cart" : "Out of Stock"}
+            {canPurchase ? "Add to Cart" : purchaseDisabledLabel}
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.95 }}

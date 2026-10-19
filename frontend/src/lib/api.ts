@@ -258,6 +258,27 @@ const normalizeProduct = (product: ApiProduct) => {
   const image = normalizeAssetUrl(product.image);
   const hoverImage = normalizeAssetUrl(product.hoverImage) || image;
   const images = (product.images || []).map((img) => normalizeAssetUrl(img)).filter(Boolean);
+  const basePrice =
+    typeof product.price === "number" && Number.isFinite(product.price) && product.price > 0
+      ? product.price
+      : 0;
+  const fallbackVariant = basePrice > 0
+    ? undefined
+    : product.variants
+        ?.filter((variant) => typeof variant.price === "number" && Number.isFinite(variant.price) && variant.price > 0)
+        .sort((a, b) => (a.price || 0) - (b.price || 0))[0];
+  const price = basePrice || fallbackVariant?.price || 0;
+  const baseMrp =
+    typeof product.mrp === "number" && Number.isFinite(product.mrp) && product.mrp > 0
+      ? product.mrp
+      : 0;
+  const mrp = basePrice
+    ? baseMrp || price
+    : fallbackVariant?.mrp || baseMrp || price;
+  const discount = basePrice
+    ? product.discount || 0
+    : fallbackVariant?.discount ||
+      (price > 0 && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0);
 
   const derivedRam =
     product.ram ||
@@ -273,9 +294,9 @@ const normalizeProduct = (product: ApiProduct) => {
     slug: product.slug || "",
     image,
     hoverImage,
-    price: product.price || 0,
-    mrp: product.mrp || product.price || 0,
-    discount: product.discount || 0,
+    price,
+    mrp,
+    discount,
     rating: product.rating || 0,
     reviewCount: product.reviewCount || 0,
     badge: product.badge,

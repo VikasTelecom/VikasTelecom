@@ -172,7 +172,7 @@ export const MobileCategoriesPanel = ({ onClose }: Props) => {
                                 {product.title}
                               </p>
                               <p className="text-xs font-semibold text-primary">
-                                ₹{product.price?.toLocaleString()}
+                                {product.price > 0 ? `₹${product.price.toLocaleString()}` : "Price unavailable"}
                               </p>
                             </div>
                           </Link>

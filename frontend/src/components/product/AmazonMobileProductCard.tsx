@@ -105,10 +105,14 @@ export function AmazonMobileProductCard({
               {discountPercent > 0 && (
                 <span className="text-sm font-semibold text-destructive">-{discountPercent}%</span>
               )}
-              <span className="text-[19px] font-bold text-foreground">
-                {formatINR(currentPrice)}
-              </span>
-              {originalPrice !== undefined && (
+              {currentPrice > 0 ? (
+                <span className="text-[19px] font-bold text-foreground">
+                  {formatINR(currentPrice)}
+                </span>
+              ) : (
+                <span className="text-sm text-muted-foreground">Price unavailable</span>
+              )}
+              {currentPrice > 0 && originalPrice !== undefined && (
                 <span className="text-[12px] text-muted-foreground line-through">
                   {formatINR(originalPrice)}
                 </span>
@@ -122,13 +126,13 @@ export function AmazonMobileProductCard({
         <button
           type="button"
           onClick={() => {
-            if (isOutOfStock) return;
+            if (isOutOfStock || product.price <= 0) return;
             addToCart(product);
           }}
-          disabled={isOutOfStock}
+          disabled={isOutOfStock || product.price <= 0}
           className="w-full rounded-full py-2.5 text-[14px] font-bold text-black bg-[hsl(var(--cta-yellow))] hover:bg-[hsl(var(--cta-yellow-hover))] transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[hsl(var(--cta-yellow))]"
         >
-          {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+          {isOutOfStock ? "Out of Stock" : product.price <= 0 ? "Price unavailable" : "Add to Cart"}
         </button>
       </div>
     </div>

@@ -54,13 +54,19 @@ export const SearchDropdown = ({ results, loading, query, onClose }: SearchDropd
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{product.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-sm font-semibold text-primary">
-                      ₹{product.price?.toLocaleString()}
-                    </span>
-                    {product.mrp && product.mrp > product.price && (
-                      <span className="text-xs text-muted-foreground line-through">
-                        ₹{product.mrp.toLocaleString()}
-                      </span>
+                    {product.price > 0 ? (
+                      <>
+                        <span className="text-sm font-semibold text-primary">
+                          ₹{product.price.toLocaleString()}
+                        </span>
+                        {product.mrp > product.price && (
+                          <span className="text-xs text-muted-foreground line-through">
+                            ₹{product.mrp.toLocaleString()}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Price unavailable</span>
                     )}
                   </div>
                 </div>

@@ -133,17 +133,17 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (isOutOfStock) return;
+                  if (isOutOfStock || product.price <= 0) return;
                   addToCart(product);
                 }}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || product.price <= 0}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.08 }}
                 className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
               >
                 <ShoppingCart className="w-4 h-4" />
-                {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                {isOutOfStock ? "Out of Stock" : product.price <= 0 ? "Price unavailable" : "Add to Cart"}
               </motion.button>
             </div>
           </motion.div>
@@ -169,10 +169,18 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           }}
           transition={{ duration: 0.1 }}
         >
-          <span className="font-bold text-foreground group-hover:text-primary transition-colors duration-100">₹{product.price.toLocaleString()}</span>
-          <span className="text-sm text-muted-foreground line-through">₹{product.mrp.toLocaleString()}</span>
-          {!isMobile && (
-            <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1 py-0.5 rounded group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-100">{product.discount}% off</span>
+          {product.price > 0 ? (
+            <>
+              <span className="font-bold text-foreground group-hover:text-primary transition-colors duration-100">₹{product.price.toLocaleString()}</span>
+              {product.mrp > product.price && (
+                <span className="text-sm text-muted-foreground line-through">₹{product.mrp.toLocaleString()}</span>
+              )}
+              {!isMobile && product.discount > 0 && (
+                <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1 py-0.5 rounded group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-100">{product.discount}% off</span>
+              )}
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground">Price unavailable</span>
           )}
         </motion.div>
 
@@ -182,14 +190,14 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             <button
               type="button"
               onClick={() => {
-                if (isOutOfStock) return;
+                if (isOutOfStock || product.price <= 0) return;
                 addToCart(product);
               }}
-              disabled={isOutOfStock}
+              disabled={isOutOfStock || product.price <= 0}
               className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <ShoppingCart className="w-4 h-4" />
-              {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+              {isOutOfStock ? "Out of Stock" : product.price <= 0 ? "Price unavailable" : "Add to Cart"}
             </button>
           </div>
         )}
