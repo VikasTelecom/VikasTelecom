@@ -3,6 +3,7 @@ const Order = require("../models/Order");
 const User = require("../models/User");
 const PaymentSettings = require("../models/PaymentSettings");
 const StoreSettings = require("../models/StoreSettings");
+const ShippingSettings = require("../models/ShippingSettings");
 
 const buildLast7Days = () => {
   const days = [];
@@ -103,6 +104,17 @@ const getAdminAnalytics = async (req, res) => {
 const defaultPaymentSettings = {
   upiEnabled: true,
   codEnabled: true,
+  upiId: "ranchhodbhai3@icici",
+};
+
+const defaultShippingSettings = {
+  freeShippingAbove: 999,
+  standardRate: 49,
+  expressRate: 99,
+  codAvailable: true,
+  codCharges: 29,
+  deliveryDays: "3-5",
+  returnWindow: 7,
 };
 
 const defaultStoreSettings = {
@@ -154,16 +166,27 @@ const getPaymentSettings = async (req, res) => {
   return res.json({
     upiEnabled: settings.upiEnabled,
     codEnabled: settings.codEnabled,
+    upiId: settings.upiId || defaultPaymentSettings.upiId,
   });
 };
 
 const updatePaymentSettings = async (req, res) => {
+  const existingSettings = await PaymentSettings.findOne();
+  const upiId = typeof req.body.upiId === "string"
+    ? req.body.upiId.trim()
+    : existingSettings?.upiId || defaultPaymentSettings.upiId;
+
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*@[A-Za-z0-9.-]+$/.test(upiId)) {
+    return res.status(400).json({ message: "Enter a valid UPI ID" });
+  }
+
   const payload = {
     upiEnabled: Boolean(req.body.upiEnabled),
     codEnabled: Boolean(req.body.codEnabled),
+    upiId,
   };
 
-  let settings = await PaymentSettings.findOne();
+  let settings = existingSettings;
   if (!settings) {
     settings = await PaymentSettings.create(payload);
   } else {
@@ -176,8 +199,39 @@ const updatePaymentSettings = async (req, res) => {
     settings: {
       upiEnabled: settings.upiEnabled,
       codEnabled: settings.codEnabled,
+      upiId: settings.upiId,
     },
   });
+};
+
+const getShippingSettings = async (_req, res) => {
+  const settings = await ShippingSettings.findOne({ key: "shipping" }).lean();
+  return res.json({ ...defaultShippingSettings, ...(settings || {}) });
+};
+
+const updateShippingSettings = async (req, res) => {
+  const body = req.body || {};
+  const payload = {
+    freeShippingAbove: Number(body.freeShippingAbove ?? defaultShippingSettings.freeShippingAbove),
+    standardRate: Number(body.standardRate ?? defaultShippingSettings.standardRate),
+    expressRate: Number(body.expressRate ?? defaultShippingSettings.expressRate),
+    codAvailable: Boolean(body.codAvailable ?? defaultShippingSettings.codAvailable),
+    codCharges: Number(body.codCharges ?? defaultShippingSettings.codCharges),
+    deliveryDays: String(body.deliveryDays ?? defaultShippingSettings.deliveryDays).trim() || defaultShippingSettings.deliveryDays,
+    returnWindow: Number(body.returnWindow ?? defaultShippingSettings.returnWindow),
+  };
+
+  if ([payload.freeShippingAbove, payload.standardRate, payload.expressRate, payload.codCharges, payload.returnWindow].some(Number.isNaN)) {
+    return res.status(400).json({ message: "Shipping settings contain invalid numeric values" });
+  }
+
+  const settings = await ShippingSettings.findOneAndUpdate(
+    { key: "shipping" },
+    { $set: payload },
+    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+  ).lean();
+
+  return res.json({ message: "Shipping settings updated", settings: { ...defaultShippingSettings, ...settings } });
 };
 
 module.exports = {
@@ -186,4 +240,6 @@ module.exports = {
   updateStoreSettings,
   getPaymentSettings,
   updatePaymentSettings,
+  getShippingSettings,
+  updateShippingSettings,
 };

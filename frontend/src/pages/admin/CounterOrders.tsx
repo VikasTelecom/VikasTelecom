@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { ClipboardList, Eye, Phone, RefreshCw } from "lucide-react";
+import { ClipboardList, Phone, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -21,7 +20,6 @@ const getVariantLabel = (variant: unknown) => {
 
 export default function CounterOrders() {
   const [orders, setOrders] = useState<CounterOrder[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<CounterOrder | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadOrders = async () => {
@@ -63,10 +61,8 @@ export default function CounterOrders() {
                   <TableHead>Mobile</TableHead>
                   <TableHead>Product details</TableHead>
                   <TableHead>Total</TableHead>
-                  <TableHead>Payment Method</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -91,20 +87,14 @@ export default function CounterOrders() {
                       </div>
                     </TableCell>
                     <TableCell className="font-semibold">₹{(order.total || 0).toLocaleString()}</TableCell>
-                    <TableCell><Badge variant="outline">Counter</Badge></TableCell>
                     <TableCell>{order.createdAt ? new Date(order.createdAt).toLocaleString() : "—"}</TableCell>
                     <TableCell><Badge variant="outline" className="capitalize">{order.status || "pending"}</Badge></TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" onClick={() => setSelectedOrder(order)}>
-                        <Eye className="mr-1 h-4 w-4" /> View
-                      </Button>
-                    </TableCell>
                   </TableRow>
                 ))}
                 {!loading && orders.length === 0 && (
-                  <TableRow><TableCell colSpan={9} className="py-12 text-center text-gray-500">No counter orders yet.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="py-12 text-center text-gray-500">No counter orders yet.</TableCell></TableRow>
                 )}
-                {loading && <TableRow><TableCell colSpan={9} className="py-12 text-center text-gray-500">Loading counter orders…</TableCell></TableRow>}
+                {loading && <TableRow><TableCell colSpan={7} className="py-12 text-center text-gray-500">Loading counter orders…</TableCell></TableRow>}
               </TableBody>
             </Table>
           </div>
@@ -133,13 +123,6 @@ export default function CounterOrders() {
                   <span className="text-muted-foreground">{order.createdAt ? new Date(order.createdAt).toLocaleString() : "—"}</span>
                   <span className="font-semibold">₹{(order.total || 0).toLocaleString()}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Payment Method</span>
-                  <Badge variant="outline">Counter</Badge>
-                </div>
-                <Button size="sm" variant="outline" className="w-full" onClick={() => setSelectedOrder(order)}>
-                  <Eye className="mr-2 h-4 w-4" /> View
-                </Button>
               </div>
             ))}
             {!loading && orders.length === 0 && (
@@ -152,51 +135,6 @@ export default function CounterOrders() {
           </div>
         </CardContent>
       </Card>
-
-      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Counter Order Details</DialogTitle>
-          </DialogHeader>
-          {selectedOrder && (
-            <div className="space-y-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Customer</h3>
-                  <p>{selectedOrder.customerName || "—"}</p>
-                  <p>{selectedOrder.customerPhone || selectedOrder.shippingAddress?.phone || "—"}</p>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Order</h3>
-                  <p className="font-mono text-sm">{selectedOrder._id || selectedOrder.id || "—"}</p>
-                  <p>{selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString() : "—"}</p>
-                  <div className="flex items-center gap-2">
-                    <span>Payment Method</span><Badge variant="outline">Counter</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>Status</span><Badge variant="outline" className="capitalize">{selectedOrder.status || "pending"}</Badge>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <h3 className="font-semibold">Products</h3>
-                {(selectedOrder.items || []).map((item, index) => (
-                  <div key={`${item.productId || item.name}-${index}`} className="rounded-lg border p-3">
-                    <div className="flex justify-between gap-3">
-                      <span className="font-medium">{item.name} × {item.qty}</span>
-                      <span>₹{(item.price * item.qty).toLocaleString()}</span>
-                    </div>
-                    {getVariantLabel(item.variant) && <p className="mt-1 text-sm text-muted-foreground">{getVariantLabel(item.variant)}</p>}
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between border-t pt-3 font-semibold">
-                <span>Total</span><span>₹{(selectedOrder.total || 0).toLocaleString()}</span>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

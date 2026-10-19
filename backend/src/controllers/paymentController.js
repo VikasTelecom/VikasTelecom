@@ -6,6 +6,7 @@ const PaymentSettings = require("../models/PaymentSettings");
 const DEFAULT_PAYMENT_SETTINGS = {
   upiEnabled: true,
   codEnabled: true,
+  upiId: "ranchhodbhai3@icici",
 };
 
 const getPublicPaymentSettings = async (req, res) => {
@@ -18,6 +19,7 @@ const getPublicPaymentSettings = async (req, res) => {
   return res.json({
     upiEnabled: settings.upiEnabled,
     codEnabled: settings.codEnabled,
+    upiId: settings.upiId || DEFAULT_PAYMENT_SETTINGS.upiId,
   });
 };
 

@@ -87,7 +87,6 @@ type OrderItem = {
 
 interface ExtendedOrder extends AdminOrder {
   phone?: string;
-  fulfillmentType?: "delivery" | "counter";
   paymentMethod?: string;
   upiTransactionId?: string;
   shippingCost?: number;
@@ -152,11 +151,10 @@ export default function Orders() {
           customer: order.customerName || "",
           email: order.email || "",
           phone: order.customerPhone || order.phone || order.shippingAddress?.phone || "—",
-          fulfillmentType: order.fulfillmentType,
           total: order.total || 0,
           status: order.status || "pending",
           paymentStatus: order.paymentStatus || "unpaid",
-          paymentMethod: order.fulfillmentType === "counter" ? "Counter" : order.paymentMethod || "COD",
+          paymentMethod: order.paymentMethod || "COD",
           upiTransactionId: order.upiTransactionId || "",
           date: order.createdAt ? new Date(order.createdAt).toISOString().slice(0, 10) : "",
           items: order.items || [],
@@ -738,7 +736,6 @@ export default function Orders() {
                       <Badge className={`${paymentColor[order.paymentStatus]} border capitalize`}>
                         {order.paymentStatus}
                       </Badge>
-                      <p className="mt-1 text-xs text-gray-500">Payment: {order.paymentMethod}</p>
                       <p className="text-xs text-gray-500 mt-1">{order.date}</p>
                     </div>
                   </div>

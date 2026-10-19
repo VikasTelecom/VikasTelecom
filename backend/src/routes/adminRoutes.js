@@ -5,6 +5,8 @@ const {
 	updateStoreSettings,
 	getPaymentSettings,
 	updatePaymentSettings,
+	getShippingSettings,
+	updateShippingSettings,
 } = require("../controllers/adminController");
 const { updateHomeHeroBanners, uploadHeroBannerImage } = require("../controllers/bannerController");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
@@ -18,6 +20,8 @@ router.get("/store-settings", requireAuth, requireAdmin, asyncHandler(getStoreSe
 router.put("/store-settings", requireAuth, requireAdmin, asyncHandler(updateStoreSettings));
 router.get("/payment-settings", requireAuth, requireAdmin, asyncHandler(getPaymentSettings));
 router.put("/payment-settings", requireAuth, requireAdmin, asyncHandler(updatePaymentSettings));
+router.get("/shipping-settings", requireAuth, requireAdmin, asyncHandler(getShippingSettings));
+router.put("/shipping-settings", requireAuth, requireAdmin, asyncHandler(updateShippingSettings));
 router.put("/hero-banners", requireAuth, requireAdmin, asyncHandler(updateHomeHeroBanners));
 router.post("/hero-banners/upload", requireAuth, requireAdmin, upload.single("image"), asyncHandler(uploadHeroBannerImage));
 

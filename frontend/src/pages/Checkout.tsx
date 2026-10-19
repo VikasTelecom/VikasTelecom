@@ -29,7 +29,6 @@ interface Address {
 type PaymentMethod = "cod" | "upi";
 
 const progressSteps = ["Cart", "Address", "Payment", "Review", "Success"] as const;
-const UPI_PAYEE_ID = "ranchhodbhai3@icici";
 const UPI_PAYEE_NAME = "Vikash Telecom";
 const UPI_INITIATED_KEY = "vt_upi_initiated";
 const UPI_REF_KEY = "vt_upi_ref";
@@ -63,6 +62,7 @@ const Checkout = () => {
   const [paymentSettings, setPaymentSettings] = useState({
     upiEnabled: true,
     codEnabled: true,
+    upiId: "ranchhodbhai3@icici",
   });
   const [loadingPaymentSettings, setLoadingPaymentSettings] = useState(false);
   const [form, setForm] = useState({
@@ -99,6 +99,7 @@ const Checkout = () => {
         setPaymentSettings({
           upiEnabled: settings.upiEnabled,
           codEnabled: settings.codEnabled,
+          upiId: settings.upiId || "ranchhodbhai3@icici",
         });
       })
       .catch(() => {
@@ -137,7 +138,7 @@ const Checkout = () => {
 
   const buildUpiDeepLink = (amount: number, orderRef: string) => {
     const params = new URLSearchParams({
-      pa: UPI_PAYEE_ID,
+      pa: paymentSettings.upiId,
       pn: UPI_PAYEE_NAME,
       am: amount.toFixed(2),
       cu: "INR",
@@ -160,7 +161,7 @@ const Checkout = () => {
   }, []);
   const upiQrPayload = useMemo(
     () => buildUpiDeepLink(finalTotal, upiCheckoutRef),
-    [finalTotal, upiCheckoutRef],
+    [finalTotal, paymentSettings.upiId, upiCheckoutRef],
   );
   const upiQrImageUrl = useMemo(
     () => `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(upiQrPayload)}`,
@@ -802,7 +803,7 @@ const Checkout = () => {
               {paymentMethod === "upi" && (
                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm text-foreground space-y-3">
                   <div>
-                    UPI ID: <span className="font-semibold">{UPI_PAYEE_ID}</span>
+                    UPI ID: <span className="font-semibold">{paymentSettings.upiId}</span>
                   </div>
                   <div className="rounded-lg border border-primary/20 bg-white p-3">
                     <p className="text-xs text-muted-foreground mb-2">Scan to pay ₹{finalTotal.toLocaleString("en-IN")}</p>
@@ -817,7 +818,7 @@ const Checkout = () => {
                     ) : (
                       <p className="text-xs text-destructive">Unable to load QR right now. Use UPI ID above to pay manually.</p>
                     )}
-                    <p className="mt-2 text-xs text-muted-foreground">This QR is generated with your current order total and pays to {UPI_PAYEE_ID}.</p>
+                    <p className="mt-2 text-xs text-muted-foreground">This QR is generated with your current order total and pays to {paymentSettings.upiId}.</p>
                   </div>
                 </div>
               )}

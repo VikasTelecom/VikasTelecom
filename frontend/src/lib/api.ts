@@ -744,19 +744,60 @@ export const api = {
     return apiRequest<{
       upiEnabled: boolean;
       codEnabled: boolean;
+      upiId: string;
     }>("/admin/payment-settings");
   },
   adminUpdatePaymentSettings: async (payload: {
     upiEnabled: boolean;
     codEnabled: boolean;
+    upiId: string;
   }) => {
     const data = await apiRequest<{
       message: string;
       settings: {
         upiEnabled: boolean;
         codEnabled: boolean;
+        upiId: string;
       };
     }>("/admin/payment-settings", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+
+    return data.settings;
+  },
+  adminGetShippingSettings: async () => {
+    return apiRequest<{
+      freeShippingAbove: number | string;
+      standardRate: number | string;
+      expressRate: number | string;
+      codAvailable: boolean;
+      codCharges: number | string;
+      deliveryDays: string;
+      returnWindow: number | string;
+    }>("/admin/shipping-settings");
+  },
+  adminUpdateShippingSettings: async (payload: {
+    freeShippingAbove: number | string;
+    standardRate: number | string;
+    expressRate: number | string;
+    codAvailable: boolean;
+    codCharges: number | string;
+    deliveryDays: string;
+    returnWindow: number | string;
+  }) => {
+    const data = await apiRequest<{
+      message: string;
+      settings: {
+        freeShippingAbove: number | string;
+        standardRate: number | string;
+        expressRate: number | string;
+        codAvailable: boolean;
+        codCharges: number | string;
+        deliveryDays: string;
+        returnWindow: number | string;
+      };
+    }>("/admin/shipping-settings", {
       method: "PUT",
       body: JSON.stringify(payload),
     });
@@ -767,6 +808,7 @@ export const api = {
     return apiRequest<{
       upiEnabled: boolean;
       codEnabled: boolean;
+      upiId: string;
     }>("/payment/settings", { skipAuth: true });
   },
 };

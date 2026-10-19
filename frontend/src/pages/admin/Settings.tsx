@@ -30,6 +30,8 @@ export default function Settings() {
     const [uploadingBanners, setUploadingBanners] = useState([false, false, false]);
     const [loadingPaymentSettings, setLoadingPaymentSettings] = useState(false);
     const [savingPaymentSettings, setSavingPaymentSettings] = useState(false);
+    const [loadingShippingSettings, setLoadingShippingSettings] = useState(false);
+    const [savingShippingSettings, setSavingShippingSettings] = useState(false);
     const [loadingStoreSettings, setLoadingStoreSettings] = useState(true);
     const [savingStoreSettings, setSavingStoreSettings] = useState(false);
 
@@ -89,6 +91,7 @@ export default function Settings() {
     const [payment, setPayment] = useState({
         upiEnabled: true,
         codEnabled: true,
+        upiId: "ranchhodbhai3@icici",
     });
 
     // Security
@@ -141,6 +144,7 @@ export default function Settings() {
                 setPayment({
                     upiEnabled: settings.upiEnabled,
                     codEnabled: settings.codEnabled,
+                    upiId: settings.upiId || "ranchhodbhai3@icici",
                 });
             })
             .catch((error) => {
@@ -151,6 +155,32 @@ export default function Settings() {
                 });
             })
             .finally(() => setLoadingPaymentSettings(false));
+    }, [activeSection]);
+
+    useEffect(() => {
+        if (activeSection !== "shipping") return;
+
+        setLoadingShippingSettings(true);
+        api.adminGetShippingSettings()
+            .then((settings) => {
+                setShipping({
+                    freeShippingAbove: String(settings.freeShippingAbove ?? "999"),
+                    standardRate: String(settings.standardRate ?? "49"),
+                    expressRate: String(settings.expressRate ?? "99"),
+                    codAvailable: Boolean(settings.codAvailable ?? true),
+                    codCharges: String(settings.codCharges ?? "29"),
+                    deliveryDays: String(settings.deliveryDays ?? "3-5"),
+                    returnWindow: String(settings.returnWindow ?? "7"),
+                });
+            })
+            .catch((error) => {
+                toast({
+                    title: "Failed to load shipping settings",
+                    description: (error as Error).message,
+                    variant: "destructive",
+                });
+            })
+            .finally(() => setLoadingShippingSettings(false));
     }, [activeSection]);
 
     const handleSave = (section: string) => {
@@ -507,6 +537,9 @@ export default function Settings() {
                                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
                                     💡 These settings control how shipping is calculated at checkout for your customers.
                                 </div>
+                                {loadingShippingSettings && (
+                                    <p className="text-sm text-muted-foreground">Loading shipping settings...</p>
+                                )}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <Label className="font-semibold">Free Shipping Above (₹)</Label>
@@ -543,8 +576,45 @@ export default function Settings() {
                                         <Input type="number" value={shipping.codCharges} onChange={(e) => setShipping({ ...shipping, codCharges: e.target.value })} />
                                     </div>
                                 )}
-                                <Button className="gap-2 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => handleSave("Shipping")}>
-                                    <Save className="w-4 h-4" /> Save Changes
+                                <Button
+                                    className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+                                    disabled={loadingShippingSettings || savingShippingSettings}
+                                    onClick={async () => {
+                                        setSavingShippingSettings(true);
+                                        try {
+                                            const updated = await api.adminUpdateShippingSettings({
+                                                freeShippingAbove: shipping.freeShippingAbove,
+                                                standardRate: shipping.standardRate,
+                                                expressRate: shipping.expressRate,
+                                                codAvailable: shipping.codAvailable,
+                                                codCharges: shipping.codCharges,
+                                                deliveryDays: shipping.deliveryDays,
+                                                returnWindow: shipping.returnWindow,
+                                            });
+
+                                            setShipping({
+                                                freeShippingAbove: String(updated.freeShippingAbove ?? shipping.freeShippingAbove),
+                                                standardRate: String(updated.standardRate ?? shipping.standardRate),
+                                                expressRate: String(updated.expressRate ?? shipping.expressRate),
+                                                codAvailable: Boolean(updated.codAvailable ?? shipping.codAvailable),
+                                                codCharges: String(updated.codCharges ?? shipping.codCharges),
+                                                deliveryDays: String(updated.deliveryDays ?? shipping.deliveryDays),
+                                                returnWindow: String(updated.returnWindow ?? shipping.returnWindow),
+                                            });
+
+                                            toast({ title: "✅ Shipping settings saved successfully!" });
+                                        } catch (error) {
+                                            toast({
+                                                title: "Failed to save shipping settings",
+                                                description: (error as Error).message,
+                                                variant: "destructive",
+                                            });
+                                        } finally {
+                                            setSavingShippingSettings(false);
+                                        }
+                                    }}
+                                >
+                                    <Save className="w-4 h-4" /> {savingShippingSettings ? "Saving..." : "Save Changes"}
                                 </Button>
                             </CardContent>
                         </Card>
@@ -578,6 +648,17 @@ export default function Settings() {
                                         </div>
                                     ))}
                                 </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="payment-upi-id" className="font-semibold">UPI ID</Label>
+                                    <Input
+                                        id="payment-upi-id"
+                                        value={payment.upiId}
+                                        onChange={(e) => setPayment({ ...payment, upiId: e.target.value })}
+                                        placeholder="yourname@bank"
+                                        autoComplete="off"
+                                    />
+                                    <p className="text-xs text-muted-foreground">Customers will use this UPI ID to pay and it will be encoded in the checkout QR.</p>
+                                </div>
                                 <Button
                                     className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
                                     disabled={loadingPaymentSettings || savingPaymentSettings}
@@ -587,11 +668,13 @@ export default function Settings() {
                                             const updated = await api.adminUpdatePaymentSettings({
                                                 upiEnabled: payment.upiEnabled,
                                                 codEnabled: payment.codEnabled,
+                                                upiId: payment.upiId.trim(),
                                             });
 
                                             setPayment({
                                                 upiEnabled: updated.upiEnabled,
                                                 codEnabled: updated.codEnabled,
+                                                upiId: updated.upiId,
                                             });
 
                                             toast({ title: "✅ Payment settings saved successfully!" });
