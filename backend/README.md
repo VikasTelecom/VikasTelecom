@@ -29,6 +29,7 @@ Express + MongoDB backend for the VikasTelecom frontend.
 - `DELETE /api/categories/:id` (admin)
 
 ## Orders
+- `POST /api/orders/counter` (counter order; no authentication required)
 - `POST /api/orders` (user)
 - `GET /api/orders/me` (user)
 - `GET /api/orders` (admin)
