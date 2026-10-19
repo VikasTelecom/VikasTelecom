@@ -1,16 +1,10 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Share2, ShoppingCart } from "lucide-react";
+import { Heart, ShoppingCart, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { toast } from "@/hooks/use-toast";
-import { shareOrCopy } from "@/lib/share";
-
-const FALLBACK_PRODUCT_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" rx="32" fill="#f4f4f5"/><rect x="56" y="56" width="288" height="288" rx="28" fill="#e4e4e7"/><path d="M104 274l66-76 44 48 30-28 56 56H104z" fill="#c4c4c8"/><circle cx="144" cy="154" r="24" fill="#d4d4d8"/></svg>'
-)}`;
+import { useWishlist } from "@/contexts/WishlistContext";
 
 interface ProductCardProps {
   product: Product;
@@ -19,60 +13,15 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [hasImageError, setHasImageError] = useState(false);
   const { addToCart } = useCart();
-  const isMobile = useIsMobile();
-
-  const isOutOfStock =
-    product.status === "out_of_stock" ||
-    product.inStock === false ||
-    product.availability === "Out of Stock" ||
-    (typeof product.stock === "number" ? product.stock <= 0 : false);
-
-  const handleShare = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const url = new URL(`/product/${product.slug || product.id}`, window.location.origin).toString();
-    const result = await shareOrCopy({
-      title: product.title,
-      text: product.title,
-      url,
-    });
-
-    if (result === "copied") {
-      toast({
-        title: "Link copied",
-        description: "Product link copied to clipboard.",
-      });
-    } else if (result === "failed") {
-      toast({
-        title: "Unable to share",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  useEffect(() => {
-    setHasImageError(false);
-  }, [product.id, product.image, product.hoverImage]);
-
-  const imageSrc = hasImageError
-    ? FALLBACK_PRODUCT_IMAGE
-    : isHovered && (product.hoverImage || product.images?.[1])
-    ? product.hoverImage || product.images?.[1] || FALLBACK_PRODUCT_IMAGE
-    : product.image || product.images?.[0] || FALLBACK_PRODUCT_IMAGE;
-
-  const hasAlternateImage = Boolean(product.hoverImage || product.images?.[1]);
-
-  const showQuickAdd = !isMobile && isHovered;
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const wishlisted = isInWishlist(product.id);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      whileHover={!isMobile ? { scale: 1, y: -4 } : undefined}
+      whileHover={{ scale: 1, y: -4 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ delay: index * 0.05, duration: 0.15 }}
       onMouseEnter={() => setIsHovered(true)}
@@ -81,35 +30,19 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     >
       {/* Image */}
       <Link to={`/product/${product.id}`} className="relative aspect-square overflow-hidden bg-muted/30 block flex-shrink-0">
-        <button
-          type="button"
-          aria-label="Share product"
-          onClick={handleShare}
-          className="absolute top-3 right-3 z-20 inline-flex items-center justify-center rounded-full bg-background/80 backdrop-blur border border-border p-2 text-foreground/80 hover:text-primary hover:bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background active:scale-95 md:opacity-0 md:group-hover:opacity-100"
-        >
-          <Share2 className="w-4 h-4" />
-        </button>
-        <img
-          src={imageSrc}
+        <motion.img
+          src={isHovered ? product.hoverImage : product.image}
           alt={product.title}
           className="w-full h-full object-cover"
-          loading={index < 4 ? "eager" : "lazy"}
-          fetchPriority={index < 4 ? "high" : "auto"}
-          decoding="async"
-          onError={() => {
-            // If hover image fails on desktop, retry with primary image before showing placeholder.
-            if (isHovered && hasAlternateImage) {
-              setIsHovered(false);
-              return;
-            }
-            setHasImageError(true);
-          }}
+          loading="lazy"
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
         />
         {product.badge && (
           <motion.span
             animate={{ rotate: isHovered ? [0, -10, 10, -10, 0] : 0 }}
             transition={{ duration: 0.2 }}
-            className={`absolute top-3 left-3 text-[10px] font-semibold px-2 py-0.5 rounded-full text-primary-foreground ${
+            className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full text-primary-foreground ${
               product.badge === "sale"
                 ? "bg-badge-sale"
                 : product.badge === "new"
@@ -120,47 +53,65 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             {product.badge === "sale" ? `-${product.discount}%` : product.badge === "new" ? "NEW" : "BEST"}
           </motion.span>
         )}
-        {/* Quick Add (desktop/hover only) */}
-        {!isMobile && (
-          <motion.div
-            initial={false}
-            animate={{ y: showQuickAdd ? 0 : "100%", opacity: showQuickAdd ? 1 : 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent"
+        <motion.button
+          onClick={() => toggleWishlist(product.id)}
+          whileHover={{ scale: 1.15, rotate: 10 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ duration: 0.1 }}
+          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors duration-100"
+        >
+          <Heart
+            className={`w-4 h-4 transition-colors duration-100 ${
+              wishlisted ? "fill-primary text-primary" : "text-foreground/60"
+            }`}
+          />
+        </motion.button>
+        {/* Quick Add */}
+        <motion.div
+          initial={false}
+          animate={{ y: isHovered ? 0 : "100%", opacity: isHovered ? 1 : 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent"
+        >
+          <motion.button
+            onClick={() => addToCart(product)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ duration: 0.08 }}
+            className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg"
           >
-            <div>
-              <motion.button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (isOutOfStock || product.price <= 0) return;
-                  addToCart(product);
-                }}
-                disabled={isOutOfStock || product.price <= 0}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.08 }}
-                className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors duration-100 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                {isOutOfStock ? "Out of Stock" : product.price <= 0 ? "Price unavailable" : "Add to Cart"}
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
+            <ShoppingCart className="w-4 h-4" />
+            Add to Cart
+          </motion.button>
+        </motion.div>
       </Link>
 
       {/* Info */}
-      <div className="p-4 bg-gradient-to-b from-background to-muted/20 flex flex-col flex-1">
+      <div className="p-4 bg-gradient-to-b from-background to-muted/20 flex flex-col flex-grow min-h-40">
         <Link to={`/product/${product.id}`}>
           <motion.h3 
-            className="font-medium text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-100 h-10"
+            className="font-medium text-sm text-foreground line-clamp-2 mb-2 group-hover:text-primary transition-colors duration-100 h-10"
             animate={{ x: isHovered ? 2 : 0 }}
             transition={{ duration: 0.1 }}
           >
             {product.title}
           </motion.h3>
         </Link>
+        <motion.div 
+          className="flex items-center gap-1 mb-2"
+          animate={{ scale: isHovered ? 1.05 : 1 }}
+          transition={{ duration: 0.1 }}
+        >
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={`w-3.5 h-3.5 transition-all duration-100 ${
+                i < Math.floor(product.rating) ? "fill-primary text-primary" : "text-border"
+              }`}
+            />
+          ))}
+          <span className="text-xs text-muted-foreground ml-1">({product.reviewCount})</span>
+        </motion.div>
         <motion.div 
           className="flex items-center gap-2 mt-auto"
           animate={{ 
@@ -169,38 +120,10 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
           }}
           transition={{ duration: 0.1 }}
         >
-          {product.price > 0 ? (
-            <>
-              <span className="font-bold text-foreground group-hover:text-primary transition-colors duration-100">₹{product.price.toLocaleString()}</span>
-              {product.mrp > product.price && (
-                <span className="text-sm text-muted-foreground line-through">₹{product.mrp.toLocaleString()}</span>
-              )}
-              {!isMobile && product.discount > 0 && (
-                <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1 py-0.5 rounded group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-100">{product.discount}% off</span>
-              )}
-            </>
-          ) : (
-            <span className="text-sm text-muted-foreground">Price unavailable</span>
-          )}
+          <span className="font-bold text-foreground group-hover:text-primary transition-colors duration-100">₹{product.price.toLocaleString()}</span>
+          <span className="text-sm text-muted-foreground line-through">₹{product.mrp.toLocaleString()}</span>
+          <span className="text-xs font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-100">{product.discount}% off</span>
         </motion.div>
-
-        {/* Mobile Add to Cart (pinned to card bottom) */}
-        {isMobile && (
-          <div className="mt-3">
-            <button
-              type="button"
-              onClick={() => {
-                if (isOutOfStock || product.price <= 0) return;
-                addToCart(product);
-              }}
-              disabled={isOutOfStock || product.price <= 0}
-              className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              {isOutOfStock ? "Out of Stock" : product.price <= 0 ? "Price unavailable" : "Add to Cart"}
-            </button>
-          </div>
-        )}
       </div>
     </motion.div>
   );
